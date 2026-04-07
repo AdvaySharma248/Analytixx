@@ -1,15 +1,7 @@
 import { create } from 'zustand';
-import type { Dataset, Insight, QueryHistory, ActiveSection } from '@/types';
+import type { Dataset, Insight, QueryHistory } from '@/types';
 
 interface AppState {
-  // Navigation
-  activeSection: ActiveSection;
-  setActiveSection: (section: ActiveSection) => void;
-  sidebarCollapsed: boolean;
-  setSidebarCollapsed: (collapsed: boolean) => void;
-  sidebarMobileOpen: boolean;
-  setSidebarMobileOpen: (open: boolean) => void;
-
   // Data
   datasets: Dataset[];
   setDatasets: (datasets: Dataset[]) => void;
@@ -28,34 +20,30 @@ interface AppState {
   setQueryHistory: (history: QueryHistory[]) => void;
   addQuery: (query: QueryHistory) => void;
 
-  // Loading states
+  // UI State
   isUploading: boolean;
   setIsUploading: (loading: boolean) => void;
   isQuerying: boolean;
   setIsQuerying: (loading: boolean) => void;
+  showRawData: boolean;
+  setShowRawData: (show: boolean) => void;
 
   // Reset
   reset: () => void;
 }
 
 const initialState = {
-  activeSection: 'dashboard' as ActiveSection,
-  sidebarCollapsed: false,
-  sidebarMobileOpen: false,
   datasets: [] as Dataset[],
   activeDataset: null as Dataset | null,
   insights: [] as Insight[],
   queryHistory: [] as QueryHistory[],
   isUploading: false,
   isQuerying: false,
+  showRawData: false,
 };
 
 export const useAppStore = create<AppState>((set) => ({
   ...initialState,
-
-  setActiveSection: (section) => set({ activeSection: section, sidebarMobileOpen: false }),
-  setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
-  setSidebarMobileOpen: (open) => set({ sidebarMobileOpen: open }),
 
   setDatasets: (datasets) => set({ datasets }),
   addDataset: (dataset) => set((state) => ({ datasets: [dataset, ...state.datasets] })),
@@ -74,6 +62,7 @@ export const useAppStore = create<AppState>((set) => ({
 
   setIsUploading: (loading) => set({ isUploading: loading }),
   setIsQuerying: (loading) => set({ isQuerying: loading }),
+  setShowRawData: (show) => set({ showRawData: show }),
 
   reset: () => set(initialState),
 }));

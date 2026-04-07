@@ -118,13 +118,15 @@
   }
   body {
     @apply bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
-/* Custom scrollbar */
+/* Thin custom scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -133,11 +135,17 @@
 
 ::-webkit-scrollbar-thumb {
   background: #D1D5DB;
-  border-radius: 3px;
+  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: #9CA3AF;
+}
+
+/* Selection color */
+::selection {
+  background: rgba(99, 102, 241, 0.15);
+  color: inherit;
 }
 
 /* Smooth transitions for interactive elements */
@@ -155,20 +163,4 @@ input:focus, textarea:focus {
 /* Chart tooltip shadow */
 .recharts-tooltip-wrapper {
   filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.08));
-}
-
-/* Smooth page content transitions */
-main > * {
-  animation: fadeIn 0.2s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }

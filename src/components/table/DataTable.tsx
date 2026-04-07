@@ -1,59 +1,76 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React from 'react';
+import { motion } from 'framer-motion';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from '@/components/ui/table';
 import { useAppStore } from '@/store/useAppStore';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 export default function DataTable() {
   const { activeDataset } = useAppStore();
 
-  const columns = useMemo(() => activeDataset?.columns || [], [activeDataset]);
-  const rows = useMemo(() => activeDataset?.dataPreview || [], [activeDataset]);
+  if (!activeDataset) return null;
 
-  if (!activeDataset || rows.length === 0) return null;
+  const { columns, dataPreview } = activeDataset;
 
   return (
-    <div className="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden">
-      <div className="px-5 py-3 border-b border-[#F3F4F6] flex items-center justify-between">
-        <div>
-          <h3 className="text-[14px] font-medium text-[#1F2937]">Data Preview</h3>
-          <p className="text-[11px] text-[#9CA3AF] mt-0.5">
-            Showing {rows.length} of {activeDataset.rowCount.toLocaleString()} rows
-          </p>
-        </div>
-      </div>
-
-      <ScrollArea className="max-h-[400px]">
-        <table className="w-full text-[13px]">
-          <thead className="sticky top-0 z-10">
-            <tr className="bg-[#F9FAFB]">
-              {columns.map((col) => (
-                <th
-                  key={col}
-                  className="px-4 py-2.5 text-left text-[11px] font-medium text-[#6B7280] uppercase tracking-wider whitespace-nowrap border-b border-[#E5E7EB]"
-                >
-                  {col}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row, i) => (
-              <tr
-                key={i}
-                className="border-b border-[#F3F4F6] hover:bg-[#FAFBFC] transition-colors duration-100"
-              >
+    <motion.div
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: 'auto' }}
+      exit={{ opacity: 0, height: 0 }}
+      transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+      className="overflow-hidden"
+    >
+      <div className="bg-white rounded-2xl border border-[#F0F1F3] overflow-hidden">
+        <div className="max-h-[400px] overflow-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-[#F7F8FA] hover:bg-[#F7F8FA] border-b border-[#E8EAED]">
                 {columns.map((col) => (
-                  <td key={col} className="px-4 py-2.5 text-[#374151] whitespace-nowrap">
-                    {row[col] != null ? String(row[col]) : '—'}
-                  </td>
+                  <TableHead
+                    key={col}
+                    className="text-[12px] font-semibold text-[#6B7280] uppercase tracking-wider h-10 px-4"
+                  >
+                    {col}
+                  </TableHead>
                 ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <ScrollBar orientation="horizontal" />
-      </ScrollArea>
-    </div>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {dataPreview.map((row, rowIndex) => (
+                <TableRow
+                  key={rowIndex}
+                  className="border-b border-[#F5F5F5] even:bg-[#FAFAFB]/50"
+                >
+                  {columns.map((col) => (
+                    <TableCell
+                      key={col}
+                      className="text-[13px] text-[#374151] px-4 py-2.5"
+                    >
+                      {row[col] != null ? String(row[col]) : (
+                        <span className="text-[#D1D5DB]">—</span>
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+        {dataPreview.length < activeDataset.rowCount && (
+          <div className="px-4 py-2.5 border-t border-[#F0F1F3] bg-[#FAFAFB]">
+            <p className="text-[12px] text-[#9CA3AF] text-center">
+              Showing {dataPreview.length} of {activeDataset.rowCount.toLocaleString()} rows (preview)
+            </p>
+          </div>
+        )}
+      </div>
+    </motion.div>
   );
 }

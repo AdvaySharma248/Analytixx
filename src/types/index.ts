@@ -37,5 +37,3 @@ export interface ChartDataPoint {
   value: number;
   [key: string]: string | number;
 }
-
-export type ActiveSection = 'dashboard' | 'upload' | 'insights' | 'history';

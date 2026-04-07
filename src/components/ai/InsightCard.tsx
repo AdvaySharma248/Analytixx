@@ -1,53 +1,65 @@
 'use client';
 
 import React from 'react';
-import { BarChart3, Clock } from 'lucide-react';
-import type { Insight } from '@/types';
-import ChartRenderer from '@/components/charts/ChartRenderer';
+import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
+import ChartRenderer from '@/components/charts/ChartRenderer';
+import type { Insight } from '@/types';
 
-const chartTypeLabels: Record<string, string> = {
-  bar: 'Bar Chart',
-  line: 'Line Chart',
-  pie: 'Pie Chart',
-  area: 'Area Chart',
-};
+interface InsightCardProps {
+  insight: Insight;
+  index: number;
+}
 
-export default function InsightCard({ insight, index }: { insight: Insight; index?: number }) {
+export default function InsightCard({ insight, index }: InsightCardProps) {
+  const formattedTime = new Date(insight.createdAt).toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+
   return (
-    <div
-      className={cn(
-        'bg-white border border-[#E5E7EB] rounded-xl p-5 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all duration-200'
-      )}
-      style={{ animationDelay: `${(index || 0) * 80}ms` }}
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{
+        duration: 0.4,
+        ease: [0.4, 0, 0.2, 1],
+        delay: index * 0.08,
+      }}
+      className="bg-white rounded-2xl border border-[#F0F1F3] p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] hover:border-[#E8EAED]"
     >
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3 mb-1">
-        <div className="flex items-center gap-2">
-          <BarChart3 className="w-4 h-4 text-[#4F46E5] shrink-0" />
-          <h3 className="text-[14px] font-semibold text-[#1F2937]">{insight.title}</h3>
-        </div>
-        <Badge variant="secondary" className="text-[11px] bg-[#F3F4F6] text-[#6B7280] shrink-0">
-          {chartTypeLabels[insight.chartType] || insight.chartType}
-        </Badge>
-      </div>
+      {/* Badge */}
+      <Badge
+        variant="secondary"
+        className="bg-[#F3F4F6] text-[#9CA3AF] hover:bg-[#F3F4F6] text-[11px] font-medium rounded-full px-2.5 py-0.5 mb-3"
+      >
+        AI Generated
+      </Badge>
+
+      {/* Title */}
+      <h3 className="text-[15px] font-semibold text-[#111827] mb-1.5 leading-snug">
+        {insight.title}
+      </h3>
 
       {/* Summary */}
-      <p className="text-[13px] text-[#6B7280] leading-relaxed mb-4">{insight.summary}</p>
+      <p className="text-[13px] text-[#6B7280] leading-relaxed mb-4 line-clamp-2">
+        {insight.summary}
+      </p>
 
       {/* Chart */}
-      <div className="mt-2">
+      <div className="rounded-xl bg-[#FAFAFB] p-3 -mx-1">
         <ChartRenderer data={insight.chartData} chartType={insight.chartType} />
       </div>
 
-      {/* Footer */}
-      <div className="flex items-center gap-1.5 mt-4 pt-3 border-t border-[#F3F4F6]">
-        <Clock className="w-3 h-3 text-[#9CA3AF]" />
-        <p className="text-[11px] text-[#9CA3AF]">
-          Based on your uploaded data &middot; {new Date(insight.createdAt).toLocaleString()}
-        </p>
+      {/* Metadata */}
+      <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[#F5F5F5]">
+        <span className="text-[11px] text-[#9CA3AF]">{formattedTime}</span>
+        <span className="text-[11px] text-[#D1D5DB]">·</span>
+        <span className="text-[11px] text-[#9CA3AF] truncate">
+          &ldquo;{insight.query}&rdquo;
+        </span>
       </div>
-    </div>
+    </motion.div>
   );
 }
