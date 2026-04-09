@@ -1,7 +1,7 @@
 const { spawn } = require('child_process');
 
 function start() {
-  const child = spawn('npx', ['next', 'dev', '-p', '3000'], {
+  const child = spawn('bun', ['run', 'dev'], {
     cwd: '/home/z/my-project',
     detached: true,
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -17,13 +17,12 @@ function start() {
   });
 
   child.on('exit', (code) => {
-    console.log(`Server exited with code ${code}. Restarting in 2s...`);
+    console.log(`\n[${new Date().toISOString()}] Server exited (code ${code}). Restarting in 2s...`);
     setTimeout(start, 2000);
   });
 
   child.unref();
-  return child;
+  console.log(`[${new Date().toISOString()}] Server started. PID: ${child.pid}`);
 }
 
-const server = start();
-console.log('Server process started. PID:', server.pid);
+start();
