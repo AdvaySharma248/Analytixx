@@ -221,9 +221,16 @@ export default function AuthView() {
         background: 'linear-gradient(135deg, #111827 0%, #1e2a3a 28%, #374357 45%, #6b7a8d 58%, #a3b0bd 72%, #d1d7de 85%, #eef0f2 95%, #f5f6f8 100%)',
       }}
     >
+      {/* ─── Ambient smoke / wind layers ─── */}
+      <div className="smoke-container">
+        <div className="smoke-layer smoke-layer--1" />
+        <div className="smoke-layer smoke-layer--2" />
+        <div className="smoke-layer smoke-layer--3" />
+      </div>
+
       {/* Subtle ambient glow behind auth card area */}
       <div
-        className="hidden md:block absolute pointer-events-none"
+        className="hidden md:block absolute pointer-events-none z-[1]"
         style={{
           right: '8%',
           top: '50%',
@@ -231,7 +238,8 @@ export default function AuthView() {
           width: '500px',
           height: '600px',
           borderRadius: '50%',
-          background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.07) 0%, transparent 70%)',
+          background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.06) 0%, transparent 70%)',
+          filter: 'blur(40px)',
         }}
       />
 
