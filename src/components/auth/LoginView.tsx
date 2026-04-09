@@ -1,104 +1,337 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { ArrowRight, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowRight, Loader2, BarChart3, Sparkles, Zap, Check } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 
-export default function LoginView() {
-  const { setIsLoggedIn } = useAppStore();
+// ─── Feature highlight items ───
+const FEATURES = [
+  { icon: <BarChart3 className="w-5 h-5" />, title: 'Smart Data Visualization', desc: 'Automatic chart generation from your data' },
+  { icon: <Sparkles className="w-5 h-5" />, title: 'AI-Powered Insights', desc: 'Natural language queries, instant answers' },
+  { icon: <Zap className="w-5 h-5" />, title: 'Real-time Analysis', desc: 'Process and analyze data in seconds' },
+];
+
+// ─── Shared input component ───
+function FormInput({
+  label,
+  type = 'text',
+  placeholder,
+  value,
+  onChange,
+  autoComplete,
+}: {
+  label: string;
+  type?: string;
+  placeholder: string;
+  value: string;
+  onChange: (v: string) => void;
+  autoComplete?: string;
+}) {
+  return (
+    <div>
+      <label className="block text-[12px] font-medium text-[#6B7280] mb-1.5">
+        {label}
+      </label>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        className="
+          w-full px-3.5 py-2.5 rounded-lg border border-[#E5E7EB] bg-white
+          text-[14px] text-[#111827] placeholder-[#C9CDD1]
+          outline-none transition-all duration-200
+          focus:border-[#9CA3AF] focus:ring-2 focus:ring-[#9CA3AF]/10
+        "
+      />
+    </div>
+  );
+}
+
+// ─── Sign In form (front) ───
+function SignInForm({ onFlip, onSubmit, isLoading }: {
+  onFlip: () => void;
+  onSubmit: (email: string, password: string) => void;
+  isLoading: boolean;
+}) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-
   const canSubmit = email.trim().length > 0 && password.trim().length > 0;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleForm = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canSubmit || isLoading) return;
-    setIsLoading(true);
+    if (canSubmit && !isLoading) onSubmit(email, password);
+  };
 
-    // Simulate auth delay
+  return (
+    <form onSubmit={handleForm} className="space-y-4">
+      <div className="mb-6">
+        <h2 className="text-[20px] font-semibold text-[#111827]">Welcome back</h2>
+        <p className="text-[14px] text-[#9CA3AF] mt-1">Sign in to continue to DataAI</p>
+      </div>
+
+      <FormInput
+        label="Email"
+        type="email"
+        placeholder="you@company.com"
+        value={email}
+        onChange={setEmail}
+        autoComplete="email"
+      />
+      <FormInput
+        label="Password"
+        type="password"
+        placeholder="Enter your password"
+        value={password}
+        onChange={setPassword}
+        autoComplete="current-password"
+      />
+
+      <button
+        type="submit"
+        disabled={!canSubmit || isLoading}
+        className="
+          w-full flex items-center justify-center gap-2 h-10 rounded-lg
+          bg-[#111827] hover:bg-[#374151] text-white text-[14px] font-medium
+          transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed
+          hover:-translate-y-[1px] active:translate-y-0
+        "
+      >
+        {isLoading ? (
+          <Loader2 className="w-4 h-4 animate-spin" />
+        ) : (
+          <>Sign in <ArrowRight className="w-4 h-4" /></>
+        )}
+      </button>
+
+      <p className="text-center text-[13px] text-[#9CA3AF]">
+        Don&apos;t have an account?{' '}
+        <button
+          type="button"
+          onClick={onFlip}
+          className="text-[#111827] font-medium hover:underline"
+        >
+          Sign up
+        </button>
+      </p>
+    </form>
+  );
+}
+
+// ─── Sign Up form (back) ───
+function SignUpForm({ onFlip, onSubmit, isLoading }: {
+  onFlip: () => void;
+  onSubmit: (name: string, email: string, password: string) => void;
+  isLoading: boolean;
+}) {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const canSubmit = name.trim().length > 0 && email.trim().length > 0 && password.trim().length > 0;
+
+  const handleForm = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (canSubmit && !isLoading) onSubmit(name, email, password);
+  };
+
+  return (
+    <form onSubmit={handleForm} className="space-y-4">
+      <div className="mb-6">
+        <h2 className="text-[20px] font-semibold text-[#111827]">Create account</h2>
+        <p className="text-[14px] text-[#9CA3AF] mt-1">Get started with DataAI for free</p>
+      </div>
+
+      <FormInput
+        label="Full name"
+        placeholder="John Doe"
+        value={name}
+        onChange={setName}
+        autoComplete="name"
+      />
+      <FormInput
+        label="Email"
+        type="email"
+        placeholder="you@company.com"
+        value={email}
+        onChange={setEmail}
+        autoComplete="email"
+      />
+      <FormInput
+        label="Password"
+        type="password"
+        placeholder="Create a password"
+        value={password}
+        onChange={setPassword}
+        autoComplete="new-password"
+      />
+
+      <button
+        type="submit"
+        disabled={!canSubmit || isLoading}
+        className="
+          w-full flex items-center justify-center gap-2 h-10 rounded-lg
+          bg-[#111827] hover:bg-[#374151] text-white text-[14px] font-medium
+          transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed
+          hover:-translate-y-[1px] active:translate-y-0
+        "
+      >
+        {isLoading ? (
+          <Loader2 className="w-4 h-4 animate-spin" />
+        ) : (
+          <>Create account <ArrowRight className="w-4 h-4" /></>
+        )}
+      </button>
+
+      <p className="text-center text-[13px] text-[#9CA3AF]">
+        Already have an account?{' '}
+        <button
+          type="button"
+          onClick={onFlip}
+          className="text-[#111827] font-medium hover:underline"
+        >
+          Sign in
+        </button>
+      </p>
+    </form>
+  );
+}
+
+// ─── Main Auth View ───
+export default function AuthView() {
+  const { setIsLoggedIn } = useAppStore();
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSignIn = async (_email: string, _password: string) => {
+    setIsLoading(true);
+    await new Promise((r) => setTimeout(r, 800));
+    setIsLoggedIn(true);
+  };
+
+  const handleSignUp = async (_name: string, _email: string, _password: string) => {
+    setIsLoading(true);
     await new Promise((r) => setTimeout(r, 800));
     setIsLoggedIn(true);
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center px-6">
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-        className="w-full max-w-[380px]"
-      >
-        {/* Logo */}
-        <div className="flex items-center gap-2 mb-8 justify-center">
-          <div className="w-8 h-8 rounded-lg bg-[#111827] flex items-center justify-center">
+    <div className="min-h-screen bg-[#F7F8FA] flex flex-col md:flex-row">
+      {/* ─── Left: Product Info ─── */}
+      <div className="hidden md:flex md:w-1/2 lg:w-[55%] flex-col justify-between p-12 lg:p-16 bg-[#111827] text-white">
+        {/* Top: Logo */}
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center backdrop-blur-sm">
             <span className="text-[14px] font-bold text-white leading-none">D</span>
           </div>
-          <span className="text-[18px] font-semibold text-[#111827] tracking-tight">
+          <span className="text-[17px] font-semibold tracking-tight text-white/90">
             DataAI
           </span>
         </div>
 
-        {/* Heading */}
-        <div className="text-center mb-8">
-          <h1 className="text-[20px] font-semibold text-[#111827]">
-            Welcome back
+        {/* Center: Content */}
+        <div className="max-w-md">
+          <h1 className="text-[32px] lg:text-[38px] font-semibold leading-tight tracking-tight">
+            Turn your data into insights, instantly
           </h1>
-          <p className="text-[14px] text-[#9CA3AF] mt-1.5">
-            Sign in to your account to continue
+          <p className="text-[15px] text-white/50 mt-4 leading-relaxed">
+            Upload your dataset and ask questions in plain English. Get visualizations, trends, and summaries powered by AI.
           </p>
+
+          {/* Feature highlights */}
+          <div className="mt-10 space-y-4">
+            {FEATURES.map((f) => (
+              <div key={f.title} className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-lg bg-white/[0.07] flex items-center justify-center shrink-0 mt-0.5 text-white/60">
+                  {f.icon}
+                </div>
+                <div>
+                  <p className="text-[14px] font-medium text-white/80">{f.title}</p>
+                  <p className="text-[13px] text-white/35 mt-0.5">{f.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-[#ECEDEE] p-6 space-y-4">
-          <div>
-            <label className="block text-[12px] font-medium text-[#6B7280] mb-1.5">
-              Email
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@company.com"
-              className="w-full px-3.5 py-2.5 rounded-lg border border-[#ECEDEE] bg-[#FAFAFB] text-[14px] text-[#111827] placeholder-[#C9CDD1] outline-none transition-colors focus:border-[#9CA3AF] focus:bg-white"
-              autoComplete="email"
-            />
-          </div>
-
-          <div>
-            <label className="block text-[12px] font-medium text-[#6B7280] mb-1.5">
-              Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              className="w-full px-3.5 py-2.5 rounded-lg border border-[#ECEDEE] bg-[#FAFAFB] text-[14px] text-[#111827] placeholder-[#C9CDD1] outline-none transition-colors focus:border-[#9CA3AF] focus:bg-white"
-              autoComplete="current-password"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={!canSubmit || isLoading}
-            className="w-full flex items-center justify-center gap-2 h-10 rounded-lg bg-[#111827] hover:bg-[#374151] text-white text-[14px] font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {isLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <>Sign in <ArrowRight className="w-4 h-4" /></>
-            )}
-          </button>
-        </form>
-
-        {/* Footer */}
-        <p className="text-center text-[12px] text-[#C9CDD1] mt-6">
-          By signing in, you agree to our Terms of Service
+        {/* Bottom */}
+        <p className="text-[12px] text-white/20">
+          © 2025 DataAI. All rights reserved.
         </p>
-      </motion.div>
+      </div>
+
+      {/* ─── Right: Auth Card ─── */}
+      <div className="flex-1 flex items-center justify-center px-6 py-12 md:py-0">
+        <div className="w-full max-w-[400px]">
+          {/* Mobile logo */}
+          <div className="flex items-center gap-2 mb-8 md:hidden justify-center">
+            <div className="w-8 h-8 rounded-lg bg-[#111827] flex items-center justify-center">
+              <span className="text-[14px] font-bold text-white leading-none">D</span>
+            </div>
+            <span className="text-[17px] font-semibold text-[#111827] tracking-tight">
+              DataAI
+            </span>
+          </div>
+
+          {/* Mobile feature list */}
+          <div className="md:hidden mb-8">
+            <h2 className="text-[22px] font-semibold text-[#111827] text-center">
+              Turn your data into insights
+            </h2>
+            <p className="text-[14px] text-[#9CA3AF] text-center mt-2">
+              AI-powered data analysis in seconds
+            </p>
+          </div>
+
+          {/* 3D Flip Card */}
+          <div
+            className="relative w-full"
+            style={{ perspective: '1200px' }}
+          >
+            <motion.div
+              animate={{ rotateY: isSignUp ? 180 : 0 }}
+              transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+              className="w-full"
+              style={{ transformStyle: 'preserve-3d' }}
+            >
+              {/* Front: Sign In */}
+              <div
+                className="bg-white rounded-2xl border border-[#E5E7EB] shadow-[0_1px_3px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)] p-6"
+                style={{
+                  backfaceVisibility: 'hidden',
+                }}
+              >
+                <SignInForm
+                  onFlip={() => setIsSignUp(true)}
+                  onSubmit={handleSignIn}
+                  isLoading={isLoading}
+                />
+              </div>
+
+              {/* Back: Sign Up */}
+              <div
+                className="absolute inset-0 bg-white rounded-2xl border border-[#E5E7EB] shadow-[0_1px_3px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)] p-6"
+                style={{
+                  backfaceVisibility: 'hidden',
+                  transform: 'rotateY(180deg)',
+                }}
+              >
+                <SignUpForm
+                  onFlip={() => setIsSignUp(false)}
+                  onSubmit={handleSignUp}
+                  isLoading={isLoading}
+                />
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Footer */}
+          <p className="text-center text-[11px] text-[#C9CDD1] mt-6">
+            By continuing, you agree to our Terms of Service
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
