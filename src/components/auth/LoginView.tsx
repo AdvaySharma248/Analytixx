@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, Loader2, BarChart3, Sparkles, Zap, Check } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ArrowRight, Loader2, BarChart3, Sparkles, Zap } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 
 // ─── Feature highlight items ───
@@ -96,7 +96,6 @@ function SignInForm({ onFlip, onSubmit, isLoading }: {
           w-full flex items-center justify-center gap-2 h-10 rounded-lg
           bg-[#111827] hover:bg-[#374151] text-white text-[14px] font-medium
           transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed
-          hover:-translate-y-[1px] active:translate-y-0
         "
       >
         {isLoading ? (
@@ -106,7 +105,7 @@ function SignInForm({ onFlip, onSubmit, isLoading }: {
         )}
       </button>
 
-      <p className="text-center text-[13px] text-[#9CA3AF]">
+      <p className="text-center text-[13px] text-[#9CA3AF] pt-1">
         Don&apos;t have an account?{' '}
         <button
           type="button"
@@ -138,7 +137,7 @@ function SignUpForm({ onFlip, onSubmit, isLoading }: {
 
   return (
     <form onSubmit={handleForm} className="space-y-4">
-      <div className="mb-6">
+      <div className="mb-5">
         <h2 className="text-[20px] font-semibold text-[#111827]">Create account</h2>
         <p className="text-[14px] text-[#9CA3AF] mt-1">Get started with DataAI for free</p>
       </div>
@@ -174,7 +173,6 @@ function SignUpForm({ onFlip, onSubmit, isLoading }: {
           w-full flex items-center justify-center gap-2 h-10 rounded-lg
           bg-[#111827] hover:bg-[#374151] text-white text-[14px] font-medium
           transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed
-          hover:-translate-y-[1px] active:translate-y-0
         "
       >
         {isLoading ? (
@@ -184,7 +182,7 @@ function SignUpForm({ onFlip, onSubmit, isLoading }: {
         )}
       </button>
 
-      <p className="text-center text-[13px] text-[#9CA3AF]">
+      <p className="text-center text-[13px] text-[#9CA3AF] pt-1">
         Already have an account?{' '}
         <button
           type="button"
@@ -275,31 +273,40 @@ export default function AuthView() {
           </div>
 
           {/* Mobile feature list */}
-          <div className="md:hidden mb-8">
-            <h2 className="text-[22px] font-semibold text-[#111827] text-center">
+          <div className="md:hidden mb-8 text-center">
+            <h2 className="text-[22px] font-semibold text-[#111827]">
               Turn your data into insights
             </h2>
-            <p className="text-[14px] text-[#9CA3AF] text-center mt-2">
+            <p className="text-[14px] text-[#9CA3AF] mt-2">
               AI-powered data analysis in seconds
             </p>
           </div>
 
-          {/* 3D Flip Card */}
-          <div
-            className="relative w-full"
-            style={{ perspective: '1200px' }}
-          >
+          {/* ─── 3D Flip Card (CSS Grid stacking) ─── */}
+          <div style={{ perspective: '1200px' }}>
             <motion.div
               animate={{ rotateY: isSignUp ? 180 : 0 }}
-              transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-              className="w-full"
-              style={{ transformStyle: 'preserve-3d' }}
+              transition={{
+                duration: 0.5,
+                ease: [0.4, 0, 0.2, 1],
+              }}
+              style={{
+                transformStyle: 'preserve-3d',
+                display: 'grid',
+                gridTemplate: '1fr / 1fr',
+              }}
             >
-              {/* Front: Sign In */}
+              {/* Front: Sign In — both sides stacked via grid */}
               <div
-                className="bg-white rounded-2xl border border-[#E5E7EB] shadow-[0_1px_3px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)] p-6"
+                className="
+                  rounded-2xl border border-[#E5E7EB] bg-white
+                  shadow-[0_1px_3px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)]
+                  p-6
+                "
                 style={{
+                  gridArea: '1 / 1',
                   backfaceVisibility: 'hidden',
+                  WebkitBackfaceVisibility: 'hidden',
                 }}
               >
                 <SignInForm
@@ -309,11 +316,17 @@ export default function AuthView() {
                 />
               </div>
 
-              {/* Back: Sign Up */}
+              {/* Back: Sign Up — same grid cell, flipped 180deg */}
               <div
-                className="absolute inset-0 bg-white rounded-2xl border border-[#E5E7EB] shadow-[0_1px_3px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)] p-6"
+                className="
+                  rounded-2xl border border-[#E5E7EB] bg-white
+                  shadow-[0_1px_3px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)]
+                  p-6
+                "
                 style={{
+                  gridArea: '1 / 1',
                   backfaceVisibility: 'hidden',
+                  WebkitBackfaceVisibility: 'hidden',
                   transform: 'rotateY(180deg)',
                 }}
               >
