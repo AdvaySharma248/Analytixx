@@ -221,11 +221,13 @@ export default function AuthView() {
         background: 'linear-gradient(135deg, #111827 0%, #1e2a3a 28%, #374357 45%, #6b7a8d 58%, #a3b0bd 72%, #d1d7de 85%, #eef0f2 95%, #f5f6f8 100%)',
       }}
     >
-      {/* ─── Ambient smoke / wind layers ─── */}
+      {/* ─── Ambient smoke / wind blobs ─── */}
       <div className="smoke-container">
-        <div className="smoke-layer smoke-layer--1" />
-        <div className="smoke-layer smoke-layer--2" />
-        <div className="smoke-layer smoke-layer--3" />
+        <div className="smoke-blob smoke-blob--1" />
+        <div className="smoke-blob smoke-blob--2" />
+        <div className="smoke-blob smoke-blob--3" />
+        <div className="smoke-blob smoke-blob--4" />
+        <div className="smoke-blob smoke-blob--5" />
       </div>
 
       {/* Subtle ambient glow behind auth card area */}
@@ -367,7 +369,7 @@ export default function AuthView() {
           </div>
 
           {/* Footer */}
-          <p className="text-center text-[11px] text-[#9CA3AF] mt-6">
+          <p className="text-center text-[12px] text-[#6B7280] mt-8">
             By continuing, you agree to our Terms of Service
           </p>
         </div>
