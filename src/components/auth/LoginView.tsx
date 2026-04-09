@@ -215,9 +215,28 @@ export default function AuthView() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F8FA] flex flex-col md:flex-row">
-      {/* ─── Left: Product Info ─── */}
-      <div className="hidden md:flex md:w-1/2 lg:w-[55%] flex-col justify-between p-12 lg:p-16 bg-[#111827] text-white">
+    <div
+      className="min-h-screen flex flex-col md:flex-row relative overflow-hidden"
+      style={{
+        background: 'linear-gradient(135deg, #111827 0%, #1e2a3a 28%, #374357 45%, #6b7a8d 58%, #a3b0bd 72%, #d1d7de 85%, #eef0f2 95%, #f5f6f8 100%)',
+      }}
+    >
+      {/* Subtle ambient glow behind auth card area */}
+      <div
+        className="hidden md:block absolute pointer-events-none"
+        style={{
+          right: '8%',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          width: '500px',
+          height: '600px',
+          borderRadius: '50%',
+          background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.07) 0%, transparent 70%)',
+        }}
+      />
+
+      {/* ─── Left: Product Info (sits on gradient, no separate bg) ─── */}
+      <div className="hidden md:flex md:w-1/2 lg:w-[52%] flex-col justify-between p-12 lg:p-16 text-white relative z-10">
         {/* Top: Logo */}
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center backdrop-blur-sm">
@@ -260,7 +279,7 @@ export default function AuthView() {
       </div>
 
       {/* ─── Right: Auth Card ─── */}
-      <div className="flex-1 flex items-center justify-center px-6 py-12 md:py-0">
+      <div className="flex-1 flex items-center justify-center px-6 py-12 md:py-0 relative z-10">
         <div className="w-full max-w-[400px]">
           {/* Mobile logo */}
           <div className="flex items-center gap-2 mb-8 md:hidden justify-center">
@@ -296,11 +315,11 @@ export default function AuthView() {
                 gridTemplate: '1fr / 1fr',
               }}
             >
-              {/* Front: Sign In — both sides stacked via grid */}
+              {/* Front: Sign In */}
               <div
                 className="
-                  rounded-2xl border border-[#E5E7EB] bg-white
-                  shadow-[0_1px_3px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)]
+                  rounded-2xl bg-white
+                  shadow-[0_4px_6px_rgba(0,0,0,0.04),0_10px_30px_rgba(0,0,0,0.06)]
                   p-6
                 "
                 style={{
@@ -316,11 +335,11 @@ export default function AuthView() {
                 />
               </div>
 
-              {/* Back: Sign Up — same grid cell, flipped 180deg */}
+              {/* Back: Sign Up */}
               <div
                 className="
-                  rounded-2xl border border-[#E5E7EB] bg-white
-                  shadow-[0_1px_3px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)]
+                  rounded-2xl bg-white
+                  shadow-[0_4px_6px_rgba(0,0,0,0.04),0_10px_30px_rgba(0,0,0,0.06)]
                   p-6
                 "
                 style={{
@@ -340,7 +359,7 @@ export default function AuthView() {
           </div>
 
           {/* Footer */}
-          <p className="text-center text-[11px] text-[#C9CDD1] mt-6">
+          <p className="text-center text-[11px] text-[#9CA3AF] mt-6">
             By continuing, you agree to our Terms of Service
           </p>
         </div>
