@@ -6,6 +6,7 @@ import { Table2 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import TopNav from '@/components/layout/TopNav';
 import LoginView from '@/components/auth/LoginView';
+import ProfileView from '@/components/profile/ProfileView';
 import UploadSection from '@/components/upload/UploadSection';
 import HeroInput from '@/components/ai/HeroInput';
 import DataSummaryPanel from '@/components/analysis/DataSummaryPanel';
@@ -93,7 +94,8 @@ function DashboardView() {
                   onClick={() => setShowRawData(!showRawData)}
                   className="
                     inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px] font-medium
-                    text-[#9CA3AF] hover:text-[#6B7280] hover:bg-white transition-all duration-200
+                    text-[#9CA3AF] dark:text-gray-500 hover:text-[#6B7280] dark:hover:text-gray-300
+                    hover:bg-white dark:hover:bg-white/[0.06] transition-all duration-200
                   "
                 >
                   <Table2 className="w-3 h-3" />
@@ -112,20 +114,20 @@ function DashboardView() {
 }
 
 export default function DashboardPage() {
-  const { isLoggedIn } = useAppStore();
+  const { isLoggedIn, currentView } = useAppStore();
 
   return (
     <AnimatePresence mode="wait">
       {isLoggedIn ? (
         <motion.div
-          key="dashboard"
+          key="app"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25 }}
-          className="min-h-screen bg-[#F7F8FA]"
+          className="min-h-screen bg-[#F7F8FA] dark:bg-[#0d0d14] transition-colors duration-300"
         >
-          <DashboardView />
+          {currentView === 'profile' ? <ProfileView /> : <DashboardView />}
         </motion.div>
       ) : (
         <motion.div

@@ -22,15 +22,20 @@ interface StatItemProps {
 
 function StatItem({ icon, label, value, sub }: StatItemProps) {
   return (
-    <div className="bg-white rounded-xl border border-[#ECEDEE] px-4 py-3.5 transition-colors duration-200 hover:border-[#DDDEE0]">
+    <div className="
+      bg-white dark:bg-[#1a1a28] rounded-xl
+      border border-[#ECEDEE] dark:border-white/[0.08]
+      px-4 py-3.5 transition-colors duration-300
+      hover:border-[#DDDEE0] dark:hover:border-white/[0.12]
+    ">
       <div className="flex items-center gap-2.5">
-        <div className="w-8 h-8 rounded-lg bg-[#F5F6F7] flex items-center justify-center shrink-0">
+        <div className="w-8 h-8 rounded-lg bg-[#F5F6F7] dark:bg-white/[0.06] flex items-center justify-center shrink-0 transition-colors duration-300">
           {icon}
         </div>
         <div className="min-w-0">
-          <p className="text-[11px] font-medium text-[#9CA3AF] uppercase tracking-wider">{label}</p>
-          <p className="text-[16px] font-semibold text-[#111827] leading-tight mt-0.5">{value}</p>
-          {sub && <p className="text-[11px] text-[#9CA3AF] mt-0.5">{sub}</p>}
+          <p className="text-[11px] font-medium text-[#9CA3AF] dark:text-gray-500 uppercase tracking-wider transition-colors duration-300">{label}</p>
+          <p className="text-[16px] font-semibold text-[#111827] dark:text-gray-100 leading-tight mt-0.5 transition-colors duration-300">{value}</p>
+          {sub && <p className="text-[11px] text-[#9CA3AF] dark:text-gray-500 mt-0.5 transition-colors duration-300">{sub}</p>}
         </div>
       </div>
     </div>
@@ -52,33 +57,33 @@ export default function DataSummaryPanel() {
 
     return [
       {
-        icon: <Table2 className="w-4 h-4 text-[#6B7280]" />,
+        icon: <Table2 className="w-4 h-4 text-[#6B7280] dark:text-gray-400" />,
         label: 'Total Records',
         value: activeDataset.rowCount.toLocaleString(),
       },
       {
-        icon: <Columns3 className="w-4 h-4 text-[#6B7280]" />,
+        icon: <Columns3 className="w-4 h-4 text-[#6B7280] dark:text-gray-400" />,
         label: 'Columns',
         value: activeDataset.columnCount,
       },
       {
-        icon: <CheckCircle2 className="w-4 h-4 text-[#6B7280]" />,
+        icon: <CheckCircle2 className="w-4 h-4 text-[#6B7280] dark:text-gray-400" />,
         label: 'Status',
         value: 'Ready',
       },
       {
-        icon: <ShieldCheck className="w-4 h-4 text-[#6B7280]" />,
+        icon: <ShieldCheck className="w-4 h-4 text-[#6B7280] dark:text-gray-400" />,
         label: 'Data Quality',
         value: '100%',
         sub: 'No missing values detected',
       },
       {
-        icon: <Hash className="w-4 h-4 text-[#6B7280]" />,
+        icon: <Hash className="w-4 h-4 text-[#6B7280] dark:text-gray-400" />,
         label: 'File Size',
         value: formatFileSize(activeDataset.fileSize),
       },
       {
-        icon: <CalendarRange className="w-4 h-4 text-[#6B7280]" />,
+        icon: <CalendarRange className="w-4 h-4 text-[#6B7280] dark:text-gray-400" />,
         label: 'Uploaded',
         value: formattedDate,
       },
@@ -96,9 +101,9 @@ export default function DataSummaryPanel() {
     >
       {/* Section header */}
       <div>
-        <h2 className="text-[13px] font-semibold text-[#374151] uppercase tracking-wider">Data Summary</h2>
+        <h2 className="text-[13px] font-semibold text-[#374151] dark:text-gray-300 uppercase tracking-wider transition-colors duration-300">Data Summary</h2>
         {activeDataset && (
-          <p className="text-[12px] text-[#9CA3AF] mt-1 truncate">{activeDataset.filename}</p>
+          <p className="text-[12px] text-[#9CA3AF] dark:text-gray-500 mt-1 truncate transition-colors duration-300">{activeDataset.filename}</p>
         )}
       </div>
 
@@ -111,13 +116,22 @@ export default function DataSummaryPanel() {
 
       {/* Columns list */}
       {columns.length > 0 && (
-        <div className="bg-white rounded-xl border border-[#ECEDEE] px-4 py-3.5">
-          <p className="text-[11px] font-medium text-[#9CA3AF] uppercase tracking-wider mb-2.5">Fields</p>
+        <div className="
+          bg-white dark:bg-[#1a1a28] rounded-xl
+          border border-[#ECEDEE] dark:border-white/[0.08]
+          px-4 py-3.5 transition-colors duration-300
+        ">
+          <p className="text-[11px] font-medium text-[#9CA3AF] dark:text-gray-500 uppercase tracking-wider mb-2.5 transition-colors duration-300">Fields</p>
           <div className="flex flex-wrap gap-1.5">
             {columns.map((col) => (
               <span
                 key={col}
-                className="inline-flex items-center px-2.5 py-1 rounded-md bg-[#F5F6F7] text-[12px] font-medium text-[#4B5563]"
+                className="
+                  inline-flex items-center px-2.5 py-1 rounded-md
+                  bg-[#F5F6F7] dark:bg-white/[0.06]
+                  text-[12px] font-medium text-[#4B5563] dark:text-gray-300
+                  transition-colors duration-300
+                "
               >
                 {col}
               </span>
@@ -132,13 +146,17 @@ export default function DataSummaryPanel() {
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-          className="bg-white rounded-xl border border-[#ECEDEE] px-4 py-3.5"
+          className="
+            bg-white dark:bg-[#1a1a28] rounded-xl
+            border border-[#ECEDEE] dark:border-white/[0.08]
+            px-4 py-3.5 transition-colors duration-300
+          "
         >
           <div className="flex items-center gap-2 mb-2">
-            <Clock className="w-3.5 h-3.5 text-[#9CA3AF]" />
-            <p className="text-[11px] font-medium text-[#9CA3AF] uppercase tracking-wider">Last Analysis</p>
+            <Clock className="w-3.5 h-3.5 text-[#9CA3AF] dark:text-gray-500 transition-colors duration-300" />
+            <p className="text-[11px] font-medium text-[#9CA3AF] dark:text-gray-500 uppercase tracking-wider transition-colors duration-300">Last Analysis</p>
           </div>
-          <p className="text-[13px] text-[#374151] leading-relaxed">{latestInsight.summary}</p>
+          <p className="text-[13px] text-[#374151] dark:text-gray-300 leading-relaxed transition-colors duration-300">{latestInsight.summary}</p>
         </motion.div>
       )}
     </motion.aside>

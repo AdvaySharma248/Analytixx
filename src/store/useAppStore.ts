@@ -2,11 +2,22 @@ import { create } from 'zustand';
 import type { Dataset, Insight, QueryHistory } from '@/types';
 
 type ChartType = 'bar' | 'line' | 'pie' | 'area';
+type CurrentView = 'dashboard' | 'profile';
 
 interface AppState {
   // Auth
   isLoggedIn: boolean;
   setIsLoggedIn: (v: boolean) => void;
+
+  // User
+  userName: string;
+  userEmail: string;
+  setUserName: (v: string) => void;
+  setUserEmail: (v: string) => void;
+
+  // Navigation
+  currentView: CurrentView;
+  setCurrentView: (v: CurrentView) => void;
 
   // Data
   datasets: Dataset[];
@@ -43,6 +54,9 @@ interface AppState {
 
 const initialState = {
   isLoggedIn: false,
+  userName: '',
+  userEmail: '',
+  currentView: 'dashboard' as CurrentView,
   datasets: [] as Dataset[],
   activeDataset: null as Dataset | null,
   insights: [] as Insight[],
@@ -58,6 +72,11 @@ export const useAppStore = create<AppState>((set) => ({
   ...initialState,
 
   setIsLoggedIn: (v) => set({ isLoggedIn: v }),
+
+  setUserName: (v) => set({ userName: v }),
+  setUserEmail: (v) => set({ userEmail: v }),
+
+  setCurrentView: (v) => set({ currentView: v }),
 
   setDatasets: (datasets) => set({ datasets }),
   addDataset: (dataset) => set((state) => ({ datasets: [dataset, ...state.datasets] })),

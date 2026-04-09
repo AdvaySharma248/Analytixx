@@ -96,16 +96,16 @@ export default function HeroInput() {
       <form onSubmit={handleSubmit}>
         <div
           className={`
-            relative flex items-center gap-3 rounded-xl border bg-white px-4 py-3
-            transition-all duration-200
+            relative flex items-center gap-3 rounded-xl border px-4 py-3
+            transition-all duration-300
             ${
               hasDataset
-                ? 'border-[#ECEDEE] shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] focus-within:border-[#9CA3AF] focus-within:shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_12px_rgba(0,0,0,0.05)]'
-                : 'border-[#ECEDEE] opacity-50 cursor-not-allowed bg-[#FAFAFB]'
+                ? 'bg-white dark:bg-[#1a1a28] border-[#ECEDEE] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.2),0_4px_12px_rgba(0,0,0,0.15)] focus-within:border-[#9CA3AF] dark:focus-within:border-white/[0.15] focus-within:shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_12px_rgba(0,0,0,0.05)] dark:focus-within:shadow-[0_1px_3px_rgba(0,0,0,0.3),0_4px_12px_rgba(0,0,0,0.2)]'
+                : 'bg-[#FAFAFB] dark:bg-white/[0.03] border-[#ECEDEE] dark:border-white/[0.06] opacity-50 cursor-not-allowed'
             }
           `}
         >
-          <Sparkles className={`w-4 h-4 shrink-0 ${hasDataset ? 'text-[#6B7280]' : 'text-[#C9CDD1]'}`} />
+          <Sparkles className={`w-4 h-4 shrink-0 transition-colors duration-300 ${hasDataset ? 'text-[#6B7280] dark:text-gray-400' : 'text-[#C9CDD1] dark:text-gray-600'}`} />
           <input
             ref={inputRef}
             type="text"
@@ -113,7 +113,7 @@ export default function HeroInput() {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Ask anything about your data..."
             disabled={!hasDataset || isQuerying}
-            className="flex-1 bg-transparent text-[14px] text-[#111827] placeholder-[#C9CDD1] outline-none disabled:cursor-not-allowed"
+            className="flex-1 bg-transparent text-[14px] text-[#111827] dark:text-gray-100 placeholder-[#C9CDD1] dark:placeholder-gray-600 outline-none disabled:cursor-not-allowed transition-colors duration-300"
           />
           <AnimatePresence>
             {hasText && hasDataset && (
@@ -124,12 +124,12 @@ export default function HeroInput() {
                 exit={{ opacity: 0, scale: 0.8 }}
                 transition={{ duration: 0.15 }}
                 disabled={isQuerying}
-                className="w-7 h-7 rounded-lg bg-[#374151] hover:bg-[#111827] flex items-center justify-center shrink-0 transition-colors disabled:opacity-50"
+                className="w-7 h-7 rounded-lg bg-[#374151] dark:bg-white/[0.12] hover:bg-[#111827] dark:hover:bg-white/[0.18] flex items-center justify-center shrink-0 transition-colors duration-200 disabled:opacity-50"
               >
                 {isQuerying ? (
-                  <Loader2 className="w-3 h-3 text-white animate-spin" />
+                  <Loader2 className="w-3 h-3 text-white dark:text-gray-200 animate-spin" />
                 ) : (
-                  <Send className="w-3 h-3 text-white" />
+                  <Send className="w-3 h-3 text-white dark:text-gray-200" />
                 )}
               </motion.button>
             )}
@@ -140,7 +140,7 @@ export default function HeroInput() {
       {/* Suggestion chips */}
       <div className="flex flex-wrap items-center gap-1.5 mt-2.5 justify-center">
         {!hasDataset && (
-          <p className="text-[12px] text-[#C9CDD1]">
+          <p className="text-[12px] text-[#C9CDD1] dark:text-gray-600 transition-colors duration-300">
             Upload a dataset to start asking questions
           </p>
         )}
@@ -152,7 +152,8 @@ export default function HeroInput() {
             disabled={isQuerying}
             className="
               px-3 py-1 rounded-md text-[12px] font-medium
-              bg-[#F5F6F7] text-[#6B7280] hover:bg-[#ECEDEE] hover:text-[#374151]
+              bg-[#F5F6F7] dark:bg-white/[0.06] text-[#6B7280] dark:text-gray-400
+              hover:bg-[#ECEDEE] dark:hover:bg-white/[0.1] hover:text-[#374151] dark:hover:text-gray-200
               transition-colors duration-150 disabled:opacity-50 disabled:pointer-events-none
             "
           >

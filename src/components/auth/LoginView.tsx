@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { ArrowRight, Loader2, BarChart3, Sparkles, Zap } from 'lucide-react';
+import React, { useState, useCallback, useSyncExternalStore } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowRight, Loader2, BarChart3, Sparkles, Zap, Moon, Sun } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import { useAppStore } from '@/store/useAppStore';
 
 // ─── Feature highlight items ───
@@ -30,7 +31,7 @@ function FormInput({
 }) {
   return (
     <div>
-      <label className="block text-[12px] font-medium text-[#6B7280] mb-1.5">
+      <label className="block text-[12px] font-medium text-[#6B7280] dark:text-gray-400 mb-1.5">
         {label}
       </label>
       <input
@@ -40,10 +41,13 @@ function FormInput({
         placeholder={placeholder}
         autoComplete={autoComplete}
         className="
-          w-full px-3.5 py-2.5 rounded-lg border border-[#E5E7EB] bg-white
-          text-[14px] text-[#111827] placeholder-[#C9CDD1]
-          outline-none transition-all duration-200
-          focus:border-[#9CA3AF] focus:ring-2 focus:ring-[#9CA3AF]/10
+          w-full px-3.5 py-2.5 rounded-lg
+          border border-[#E5E7EB] dark:border-white/[0.1]
+          bg-white dark:bg-[#1e1e2e]
+          text-[14px] text-[#111827] dark:text-gray-100
+          placeholder-[#C9CDD1] dark:placeholder-gray-600
+          outline-none
+          focus:border-[#9CA3AF] dark:focus:border-white/[0.2] focus:ring-2 focus:ring-[#9CA3AF]/10 dark:focus:ring-white/[0.05]
         "
       />
     </div>
@@ -68,8 +72,8 @@ function SignInForm({ onFlip, onSubmit, isLoading }: {
   return (
     <form onSubmit={handleForm} className="space-y-4">
       <div className="mb-6">
-        <h2 className="text-[20px] font-semibold text-[#111827]">Welcome back</h2>
-        <p className="text-[14px] text-[#9CA3AF] mt-1">Sign in to continue to DataAI</p>
+        <h2 className="text-[20px] font-semibold text-[#111827] dark:text-gray-100">Welcome back</h2>
+        <p className="text-[14px] text-[#9CA3AF] dark:text-gray-500 mt-1">Sign in to continue to DataAI</p>
       </div>
 
       <FormInput
@@ -94,8 +98,9 @@ function SignInForm({ onFlip, onSubmit, isLoading }: {
         disabled={!canSubmit || isLoading}
         className="
           w-full flex items-center justify-center gap-2 h-10 rounded-lg
-          bg-[#111827] hover:bg-[#374151] text-white text-[14px] font-medium
-          transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed
+          bg-[#111827] dark:bg-white/[0.12] hover:bg-[#374151] dark:hover:bg-white/[0.18]
+          text-white dark:text-gray-100 text-[14px] font-medium
+          disabled:opacity-40 disabled:cursor-not-allowed
         "
       >
         {isLoading ? (
@@ -105,12 +110,12 @@ function SignInForm({ onFlip, onSubmit, isLoading }: {
         )}
       </button>
 
-      <p className="text-center text-[13px] text-[#9CA3AF] pt-1">
+      <p className="text-center text-[13px] text-[#9CA3AF] dark:text-gray-500 pt-1">
         Don&apos;t have an account?{' '}
         <button
           type="button"
           onClick={onFlip}
-          className="text-[#111827] font-medium hover:underline"
+          className="text-[#111827] dark:text-gray-200 font-medium hover:underline"
         >
           Sign up
         </button>
@@ -138,8 +143,8 @@ function SignUpForm({ onFlip, onSubmit, isLoading }: {
   return (
     <form onSubmit={handleForm} className="space-y-4">
       <div className="mb-5">
-        <h2 className="text-[20px] font-semibold text-[#111827]">Create account</h2>
-        <p className="text-[14px] text-[#9CA3AF] mt-1">Get started with DataAI for free</p>
+        <h2 className="text-[20px] font-semibold text-[#111827] dark:text-gray-100">Create account</h2>
+        <p className="text-[14px] text-[#9CA3AF] dark:text-gray-500 mt-1">Get started with DataAI for free</p>
       </div>
 
       <FormInput
@@ -171,8 +176,9 @@ function SignUpForm({ onFlip, onSubmit, isLoading }: {
         disabled={!canSubmit || isLoading}
         className="
           w-full flex items-center justify-center gap-2 h-10 rounded-lg
-          bg-[#111827] hover:bg-[#374151] text-white text-[14px] font-medium
-          transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed
+          bg-[#111827] dark:bg-white/[0.12] hover:bg-[#374151] dark:hover:bg-white/[0.18]
+          text-white dark:text-gray-100 text-[14px] font-medium
+          disabled:opacity-40 disabled:cursor-not-allowed
         "
       >
         {isLoading ? (
@@ -182,12 +188,12 @@ function SignUpForm({ onFlip, onSubmit, isLoading }: {
         )}
       </button>
 
-      <p className="text-center text-[13px] text-[#9CA3AF] pt-1">
+      <p className="text-center text-[13px] text-[#9CA3AF] dark:text-gray-500 pt-1">
         Already have an account?{' '}
         <button
           type="button"
           onClick={onFlip}
-          className="text-[#111827] font-medium hover:underline"
+          className="text-[#111827] dark:text-gray-200 font-medium hover:underline"
         >
           Sign in
         </button>
@@ -198,30 +204,48 @@ function SignUpForm({ onFlip, onSubmit, isLoading }: {
 
 // ─── Main Auth View ───
 export default function AuthView() {
-  const { setIsLoggedIn } = useAppStore();
+  const { setIsLoggedIn, setUserName, setUserEmail } = useAppStore();
+  const { theme, setTheme } = useTheme();
   const [isSignUp, setIsSignUp] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
 
-  const handleSignIn = async (_email: string, _password: string) => {
+  const isDark = theme === 'dark';
+
+  const handleSignIn = async (email: string, _password: string) => {
     setIsLoading(true);
     await new Promise((r) => setTimeout(r, 800));
     setIsLoggedIn(true);
+    setUserEmail(email);
+    setUserName(email.split('@')[0] || 'Demo User');
   };
 
-  const handleSignUp = async (_name: string, _email: string, _password: string) => {
+  const handleSignUp = async (name: string, email: string, _password: string) => {
     setIsLoading(true);
     await new Promise((r) => setTimeout(r, 800));
     setIsLoggedIn(true);
+    setUserName(name);
+    setUserEmail(email);
   };
+
+  // Smooth theme toggle
+  const toggleTheme = useCallback(() => {
+    const root = document.documentElement;
+    root.classList.add('transitioning');
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+    setTimeout(() => root.classList.remove('transitioning'), 350);
+  }, [theme, setTheme]);
 
   return (
     <div
       className="min-h-screen flex flex-col md:flex-row relative overflow-hidden"
       style={{
-        background: 'linear-gradient(135deg, #111827 0%, #1e2a3a 28%, #374357 45%, #6b7a8d 58%, #a3b0bd 72%, #d1d7de 85%, #eef0f2 95%, #f5f6f8 100%)',
+        background: isDark
+          ? 'linear-gradient(135deg, #070710 0%, #0d0d1a 25%, #121225 42%, #181830 55%, #1e1e3a 68%, #252540 80%, #2a2a45 92%, #2d2d4a 100%)'
+          : 'linear-gradient(135deg, #111827 0%, #1e2a3a 28%, #374357 45%, #6b7a8d 58%, #a3b0bd 72%, #d1d7de 85%, #eef0f2 95%, #f5f6f8 100%)',
       }}
     >
-      {/* ─── Ambient smoke / wind blobs ─── */}
+      {/* ─── Ambient smoke blobs (CSS handles dark mode automatically) ─── */}
       <div className="smoke-container">
         <div className="smoke-blob smoke-blob--1" />
         <div className="smoke-blob smoke-blob--2" />
@@ -230,9 +254,59 @@ export default function AuthView() {
         <div className="smoke-blob smoke-blob--5" />
       </div>
 
+      {/* ─── Diagonal rain layers (CSS handles dark mode automatically) ─── */}
+      <div className="rain-container">
+        <div className="rain-layer rain-layer--1" />
+        <div className="rain-layer rain-layer--2" />
+        <div className="rain-layer rain-layer--3" />
+      </div>
+
+      {/* ─── Theme toggle (top-right, always visible) ─── */}
+      <div className="absolute top-4 right-4 md:top-5 md:right-6 z-20">
+        {mounted && (
+          <motion.button
+            onClick={toggleTheme}
+            whileTap={{ scale: 0.92 }}
+            className="
+              h-9 w-9 rounded-xl flex items-center justify-center backdrop-blur-md
+              border border-white/[0.12] dark:border-white/[0.08]
+              bg-white/[0.08] dark:bg-white/[0.06]
+              text-white/60 dark:text-white/40
+              hover:bg-white/[0.15] dark:hover:bg-white/[0.1]
+              hover:text-white/80 dark:hover:text-white/60
+            "
+            aria-label="Toggle theme"
+          >
+            <AnimatePresence mode="wait" initial={false}>
+              {isDark ? (
+                <motion.div
+                  key="sun"
+                  initial={{ rotate: -90, opacity: 0, scale: 0.5 }}
+                  animate={{ rotate: 0, opacity: 1, scale: 1 }}
+                  exit={{ rotate: 90, opacity: 0, scale: 0.5 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <Sun className="w-[16px] h-[16px]" />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="moon"
+                  initial={{ rotate: 90, opacity: 0, scale: 0.5 }}
+                  animate={{ rotate: 0, opacity: 1, scale: 1 }}
+                  exit={{ rotate: -90, opacity: 0, scale: 0.5 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <Moon className="w-[16px] h-[16px]" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.button>
+        )}
+      </div>
+
       {/* Subtle ambient glow behind auth card area */}
       <div
-        className="hidden md:block absolute pointer-events-none z-[1]"
+        className="hidden md:block absolute pointer-events-none z-[2]"
         style={{
           right: '8%',
           top: '50%',
@@ -240,7 +314,9 @@ export default function AuthView() {
           width: '500px',
           height: '600px',
           borderRadius: '50%',
-          background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.06) 0%, transparent 70%)',
+          background: isDark
+            ? 'radial-gradient(ellipse at center, rgba(255,255,255,0.02) 0%, transparent 70%)'
+            : 'radial-gradient(ellipse at center, rgba(255,255,255,0.06) 0%, transparent 70%)',
           filter: 'blur(40px)',
         }}
       />
@@ -284,7 +360,7 @@ export default function AuthView() {
 
         {/* Bottom */}
         <p className="text-[12px] text-white/20">
-          © 2025 DataAI. All rights reserved.
+          &copy; 2025 DataAI. All rights reserved.
         </p>
       </div>
 
@@ -293,20 +369,20 @@ export default function AuthView() {
         <div className="w-full max-w-[400px]">
           {/* Mobile logo */}
           <div className="flex items-center gap-2 mb-8 md:hidden justify-center">
-            <div className="w-8 h-8 rounded-lg bg-[#111827] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-[#111827] dark:bg-white/10 flex items-center justify-center">
               <span className="text-[14px] font-bold text-white leading-none">D</span>
             </div>
-            <span className="text-[17px] font-semibold text-[#111827] tracking-tight">
+            <span className="text-[17px] font-semibold text-[#111827] dark:text-gray-100 tracking-tight">
               DataAI
             </span>
           </div>
 
           {/* Mobile feature list */}
           <div className="md:hidden mb-8 text-center">
-            <h2 className="text-[22px] font-semibold text-[#111827]">
+            <h2 className="text-[22px] font-semibold text-[#111827] dark:text-gray-100">
               Turn your data into insights
             </h2>
-            <p className="text-[14px] text-[#9CA3AF] mt-2">
+            <p className="text-[14px] text-[#9CA3AF] dark:text-gray-500 mt-2">
               AI-powered data analysis in seconds
             </p>
           </div>
@@ -327,11 +403,13 @@ export default function AuthView() {
             >
               {/* Front: Sign In */}
               <div
-                className="
-                  rounded-2xl bg-white
-                  shadow-[0_4px_6px_rgba(0,0,0,0.04),0_10px_30px_rgba(0,0,0,0.06)]
-                  p-6
-                "
+                className={`
+                  rounded-2xl p-6
+                  ${isDark
+                    ? 'bg-[#1a1a2e] border border-white/[0.08] shadow-[0_4px_6px_rgba(0,0,0,0.2),0_10px_30px_rgba(0,0,0,0.3)]'
+                    : 'bg-white shadow-[0_4px_6px_rgba(0,0,0,0.04),0_10px_30px_rgba(0,0,0,0.06)]'
+                  }
+                `}
                 style={{
                   gridArea: '1 / 1',
                   backfaceVisibility: 'hidden',
@@ -347,11 +425,13 @@ export default function AuthView() {
 
               {/* Back: Sign Up */}
               <div
-                className="
-                  rounded-2xl bg-white
-                  shadow-[0_4px_6px_rgba(0,0,0,0.04),0_10px_30px_rgba(0,0,0,0.06)]
-                  p-6
-                "
+                className={`
+                  rounded-2xl p-6
+                  ${isDark
+                    ? 'bg-[#1a1a2e] border border-white/[0.08] shadow-[0_4px_6px_rgba(0,0,0,0.2),0_10px_30px_rgba(0,0,0,0.3)]'
+                    : 'bg-white shadow-[0_4px_6px_rgba(0,0,0,0.04),0_10px_30px_rgba(0,0,0,0.06)]'
+                  }
+                `}
                 style={{
                   gridArea: '1 / 1',
                   backfaceVisibility: 'hidden',
@@ -369,7 +449,7 @@ export default function AuthView() {
           </div>
 
           {/* Footer */}
-          <p className="text-center text-[12px] text-[#6B7280] mt-8">
+          <p className={`text-center text-[12px] mt-8 ${isDark ? 'text-gray-500' : 'text-[#6B7280]'}`}>
             By continuing, you agree to our Terms of Service
           </p>
         </div>
