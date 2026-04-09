@@ -84,7 +84,6 @@ export default function HeroInput() {
     inputRef.current?.focus();
   };
 
-  // Focus input when dataset becomes available
   useEffect(() => {
     if (hasDataset) {
       inputRef.current?.focus();
@@ -97,16 +96,16 @@ export default function HeroInput() {
       <form onSubmit={handleSubmit}>
         <div
           className={`
-            relative flex items-center gap-3 rounded-[14px] border bg-white px-4 py-3.5
+            relative flex items-center gap-3 rounded-xl border bg-white px-4 py-3
             transition-all duration-200
             ${
               hasDataset
-                ? 'border-[#E8EAED] shadow-[0_2px_8px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)] focus-within:border-[#6366F1]/40 focus-within:shadow-[0_2px_8px_rgba(99,102,241,0.06),0_8px_24px_rgba(99,102,241,0.08)]'
-                : 'border-[#E8EAED] opacity-60 cursor-not-allowed bg-[#FAFAFB]'
+                ? 'border-[#ECEDEE] shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] focus-within:border-[#9CA3AF] focus-within:shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_12px_rgba(0,0,0,0.05)]'
+                : 'border-[#ECEDEE] opacity-50 cursor-not-allowed bg-[#FAFAFB]'
             }
           `}
         >
-          <Sparkles className={`w-5 h-5 shrink-0 ${hasDataset ? 'text-[#6366F1]' : 'text-[#9CA3AF]'}`} />
+          <Sparkles className={`w-4 h-4 shrink-0 ${hasDataset ? 'text-[#6B7280]' : 'text-[#C9CDD1]'}`} />
           <input
             ref={inputRef}
             type="text"
@@ -114,7 +113,7 @@ export default function HeroInput() {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Ask anything about your data..."
             disabled={!hasDataset || isQuerying}
-            className="flex-1 bg-transparent text-[15px] text-[#111827] placeholder-[#9CA3AF] outline-none disabled:cursor-not-allowed"
+            className="flex-1 bg-transparent text-[14px] text-[#111827] placeholder-[#C9CDD1] outline-none disabled:cursor-not-allowed"
           />
           <AnimatePresence>
             {hasText && hasDataset && (
@@ -125,12 +124,12 @@ export default function HeroInput() {
                 exit={{ opacity: 0, scale: 0.8 }}
                 transition={{ duration: 0.15 }}
                 disabled={isQuerying}
-                className="w-8 h-8 rounded-lg bg-[#6366F1] hover:bg-[#4F46E5] flex items-center justify-center shrink-0 transition-colors disabled:opacity-50"
+                className="w-7 h-7 rounded-lg bg-[#374151] hover:bg-[#111827] flex items-center justify-center shrink-0 transition-colors disabled:opacity-50"
               >
                 {isQuerying ? (
-                  <Loader2 className="w-3.5 h-3.5 text-white animate-spin" />
+                  <Loader2 className="w-3 h-3 text-white animate-spin" />
                 ) : (
-                  <Send className="w-3.5 h-3.5 text-white" />
+                  <Send className="w-3 h-3 text-white" />
                 )}
               </motion.button>
             )}
@@ -139,9 +138,9 @@ export default function HeroInput() {
       </form>
 
       {/* Suggestion chips */}
-      <div className="flex flex-wrap items-center gap-2 mt-3 justify-center">
+      <div className="flex flex-wrap items-center gap-1.5 mt-2.5 justify-center">
         {!hasDataset && (
-          <p className="text-[12px] text-[#9CA3AF]">
+          <p className="text-[12px] text-[#C9CDD1]">
             Upload a dataset to start asking questions
           </p>
         )}
@@ -152,8 +151,8 @@ export default function HeroInput() {
             onClick={() => handleSuggestionClick(suggestion)}
             disabled={isQuerying}
             className="
-              px-3.5 py-1.5 rounded-full text-[13px] font-medium
-              bg-[#F3F4F6] text-[#6B7280] hover:bg-[#6366F1]/10 hover:text-[#6366F1]
+              px-3 py-1 rounded-md text-[12px] font-medium
+              bg-[#F5F6F7] text-[#6B7280] hover:bg-[#ECEDEE] hover:text-[#374151]
               transition-colors duration-150 disabled:opacity-50 disabled:pointer-events-none
             "
           >

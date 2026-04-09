@@ -14,6 +14,7 @@ import {
   YAxis,
   CartesianGrid,
   Cell,
+  ResponsiveContainer,
 } from 'recharts';
 import {
   ChartContainer,
@@ -23,20 +24,20 @@ import {
 } from '@/components/ui/chart';
 
 const CHART_COLORS = [
-  '#6366F1',
-  '#94A3B8',
-  '#6EE7B7',
-  '#FCD34D',
-  '#F87171',
-  '#A78BFA',
-  '#34D399',
-  '#FBBF24',
+  '#374151',
+  '#6B7280',
+  '#9CA3AF',
+  '#D1D5DB',
+  '#4B5563',
+  '#78716C',
+  '#A8A29E',
+  '#57534E',
 ];
 
 const chartConfig: ChartConfig = {
   value: {
     label: 'Value',
-    color: '#6366F1',
+    color: '#374151',
   },
 };
 
@@ -50,7 +51,7 @@ export default function ChartRenderer({ data, chartType }: ChartRendererProps) {
 
   if (chartType === 'pie') {
     return (
-      <ChartContainer config={chartConfig} className="h-[260px] w-full">
+      <ChartContainer config={chartConfig} className="h-[340px] w-full">
         <PieChart>
           <ChartTooltip content={<ChartTooltipContent />} />
           <Pie
@@ -59,9 +60,9 @@ export default function ChartRenderer({ data, chartType }: ChartRendererProps) {
             nameKey="name"
             cx="50%"
             cy="50%"
-            innerRadius={60}
-            outerRadius={95}
-            paddingAngle={3}
+            innerRadius={70}
+            outerRadius={120}
+            paddingAngle={2}
             strokeWidth={0}
           >
             {data.map((_, index) => (
@@ -78,15 +79,15 @@ export default function ChartRenderer({ data, chartType }: ChartRendererProps) {
 
   if (chartType === 'area') {
     return (
-      <ChartContainer config={chartConfig} className="h-[260px] w-full">
+      <ChartContainer config={chartConfig} className="h-[340px] w-full">
         <AreaChart data={data} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
           <defs>
             <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#6366F1" stopOpacity={0.12} />
-              <stop offset="100%" stopColor="#6366F1" stopOpacity={0.01} />
+              <stop offset="0%" stopColor="#374151" stopOpacity={0.08} />
+              <stop offset="100%" stopColor="#374151" stopOpacity={0.01} />
             </linearGradient>
           </defs>
-          <CartesianGrid stroke="#F0F1F3" vertical={false} strokeDasharray="0" />
+          <CartesianGrid stroke="#F3F4F5" vertical={false} strokeDasharray="0" />
           <XAxis
             dataKey="name"
             tick={{ fontSize: 11, fill: '#9CA3AF' }}
@@ -103,11 +104,11 @@ export default function ChartRenderer({ data, chartType }: ChartRendererProps) {
           <Area
             type="monotone"
             dataKey="value"
-            stroke="#6366F1"
+            stroke="#374151"
             strokeWidth={2}
             fill="url(#areaGradient)"
             dot={false}
-            activeDot={{ r: 4, strokeWidth: 0, fill: '#6366F1' }}
+            activeDot={{ r: 4, strokeWidth: 0, fill: '#374151' }}
           />
         </AreaChart>
       </ChartContainer>
@@ -116,9 +117,9 @@ export default function ChartRenderer({ data, chartType }: ChartRendererProps) {
 
   if (chartType === 'line') {
     return (
-      <ChartContainer config={chartConfig} className="h-[260px] w-full">
+      <ChartContainer config={chartConfig} className="h-[340px] w-full">
         <LineChart data={data} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
-          <CartesianGrid stroke="#F0F1F3" vertical={false} strokeDasharray="0" />
+          <CartesianGrid stroke="#F3F4F5" vertical={false} strokeDasharray="0" />
           <XAxis
             dataKey="name"
             tick={{ fontSize: 11, fill: '#9CA3AF' }}
@@ -135,10 +136,10 @@ export default function ChartRenderer({ data, chartType }: ChartRendererProps) {
           <Line
             type="monotone"
             dataKey="value"
-            stroke="#6366F1"
+            stroke="#374151"
             strokeWidth={2}
             dot={false}
-            activeDot={{ r: 4, strokeWidth: 0, fill: '#6366F1' }}
+            activeDot={{ r: 4, strokeWidth: 0, fill: '#374151' }}
           />
         </LineChart>
       </ChartContainer>
@@ -147,9 +148,9 @@ export default function ChartRenderer({ data, chartType }: ChartRendererProps) {
 
   // Default: bar chart
   return (
-    <ChartContainer config={chartConfig} className="h-[260px] w-full">
+    <ChartContainer config={chartConfig} className="h-[340px] w-full">
       <BarChart data={data} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
-        <CartesianGrid stroke="#F0F1F3" vertical={false} strokeDasharray="0" />
+        <CartesianGrid stroke="#F3F4F5" vertical={false} strokeDasharray="0" />
         <XAxis
           dataKey="name"
           tick={{ fontSize: 11, fill: '#9CA3AF' }}
@@ -163,12 +164,11 @@ export default function ChartRenderer({ data, chartType }: ChartRendererProps) {
           width={45}
         />
         <ChartTooltip content={<ChartTooltipContent />} />
-        <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={44}>
+        <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={52}>
           {data.map((_, index) => (
             <Cell
               key={`cell-${index}`}
-              fill="#6366F1"
-              fillOpacity={index === 0 ? 1 : 0.65 - (index * 0.04)}
+              fill={CHART_COLORS[index % CHART_COLORS.length]}
             />
           ))}
         </Bar>

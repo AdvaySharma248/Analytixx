@@ -79,7 +79,7 @@ export default function UploadSection() {
   };
 
   return (
-    <div className="w-full max-w-xl mx-auto">
+    <div className="w-full max-w-lg mx-auto">
       <input
         ref={fileInputRef}
         type="file"
@@ -92,21 +92,21 @@ export default function UploadSection() {
         {activeDataset ? (
           <motion.div
             key="file-card"
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.96 }}
-            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-            className="bg-white rounded-2xl border border-[#E8EAED] px-5 py-4 flex items-center justify-between gap-4"
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+            className="bg-white rounded-xl border border-[#ECEDEE] px-4 py-3 flex items-center justify-between gap-3"
           >
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-[#6366F1]/10 flex items-center justify-center shrink-0">
-                <Check className="w-4 h-4 text-[#6366F1]" />
+              <div className="w-8 h-8 rounded-lg bg-[#F5F6F7] flex items-center justify-center shrink-0">
+                <Check className="w-4 h-4 text-[#374151]" />
               </div>
               <div className="min-w-0">
-                <p className="text-[14px] font-medium text-[#111827] truncate">
+                <p className="text-[13px] font-medium text-[#111827] truncate">
                   {activeDataset.filename}
                 </p>
-                <p className="text-[12px] text-[#6B7280] mt-0.5">
+                <p className="text-[11px] text-[#9CA3AF] mt-0.5">
                   {activeDataset.rowCount.toLocaleString()} rows · {activeDataset.columnCount} columns
                 </p>
               </div>
@@ -114,10 +114,10 @@ export default function UploadSection() {
             <button
               onClick={handleChangeFile}
               disabled={isUploading}
-              className="flex items-center gap-1.5 text-[12px] font-medium text-[#6366F1] hover:text-[#4F46E5] shrink-0 transition-colors disabled:opacity-50"
+              className="flex items-center gap-1.5 text-[11px] font-medium text-[#6B7280] hover:text-[#374151] shrink-0 transition-colors disabled:opacity-50"
             >
               <RefreshCw className={`w-3 h-3 ${isUploading ? 'animate-spin' : ''}`} />
-              Change file
+              Change
             </button>
           </motion.div>
         ) : (
@@ -125,36 +125,36 @@ export default function UploadSection() {
             key="upload-card"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
+            exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
             onClick={handleChangeFile}
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             className={`
-              relative cursor-pointer rounded-2xl border-2 border-dashed px-8 py-14
-              flex flex-col items-center justify-center gap-3
+              relative cursor-pointer rounded-xl border-2 border-dashed px-6 py-10
+              flex flex-col items-center justify-center gap-2.5
               transition-all duration-200 ease-out
               ${
                 isDragOver
-                  ? 'border-[#6366F1]/50 bg-[#6366F1]/[0.03]'
-                  : 'border-[#E0E2E6] bg-white hover:border-[#6366F1]/30 hover:bg-[#F7F8FA]'
+                  ? 'border-[#9CA3AF]/50 bg-[#9CA3AF]/[0.02]'
+                  : 'border-[#DDDEE0] bg-white hover:border-[#9CA3AF]/40 hover:bg-[#FAFAFB]'
               }
-              ${isUploading ? 'pointer-events-none opacity-60' : ''}
+              ${isUploading ? 'pointer-events-none opacity-50' : ''}
             `}
           >
             <div className={`
-              w-11 h-11 rounded-2xl flex items-center justify-center mb-1
+              w-10 h-10 rounded-xl flex items-center justify-center
               transition-colors duration-200
-              ${isDragOver ? 'bg-[#6366F1]/10' : 'bg-[#F7F8FA]'}
+              ${isDragOver ? 'bg-[#F5F6F7]' : 'bg-[#F5F6F7]'}
             `}>
-              <ArrowUpFromLine className={`w-5 h-5 transition-colors duration-200 ${isDragOver ? 'text-[#6366F1]' : 'text-[#9CA3AF]'}`} />
+              <ArrowUpFromLine className={`w-4 h-4 transition-colors duration-200 ${isDragOver ? 'text-[#6B7280]' : 'text-[#9CA3AF]'}`} />
             </div>
-            <p className="text-[15px] font-medium text-[#6B7280]">
+            <p className="text-[14px] font-medium text-[#6B7280]">
               {isUploading ? 'Uploading...' : 'Drop your dataset here or browse'}
             </p>
-            <p className="text-[12px] text-[#9CA3AF]">
-              Supports CSV files up to 10MB
+            <p className="text-[12px] text-[#C9CDD1]">
+              CSV files up to 10MB
             </p>
           </motion.div>
         )}

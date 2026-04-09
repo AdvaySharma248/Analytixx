@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import type { Dataset, Insight, QueryHistory } from '@/types';
 
+type ChartType = 'bar' | 'line' | 'pie' | 'area';
+
 interface AppState {
   // Data
   datasets: Dataset[];
@@ -14,6 +16,7 @@ interface AppState {
   insights: Insight[];
   setInsights: (insights: Insight[]) => void;
   addInsight: (insight: Insight) => void;
+  latestInsight: Insight | null;
 
   // Query History
   queryHistory: QueryHistory[];
@@ -27,6 +30,8 @@ interface AppState {
   setIsQuerying: (loading: boolean) => void;
   showRawData: boolean;
   setShowRawData: (show: boolean) => void;
+  selectedChartType: ChartType;
+  setSelectedChartType: (type: ChartType) => void;
 
   // Reset
   reset: () => void;
@@ -36,10 +41,12 @@ const initialState = {
   datasets: [] as Dataset[],
   activeDataset: null as Dataset | null,
   insights: [] as Insight[],
+  latestInsight: null as Insight | null,
   queryHistory: [] as QueryHistory[],
   isUploading: false,
   isQuerying: false,
   showRawData: false,
+  selectedChartType: 'bar' as ChartType,
 };
 
 export const useAppStore = create<AppState>((set) => ({
@@ -52,10 +59,13 @@ export const useAppStore = create<AppState>((set) => ({
     const activeDataset = state.activeDataset?.id === id ? null : state.activeDataset;
     return { datasets, activeDataset };
   }),
-  setActiveDataset: (dataset) => set({ activeDataset: dataset }),
+  setActiveDataset: (dataset) => set({ activeDataset: dataset, latestInsight: null }),
 
   setInsights: (insights) => set({ insights }),
-  addInsight: (insight) => set((state) => ({ insights: [insight, ...state.insights] })),
+  addInsight: (insight) => set((state) => ({
+    insights: [insight, ...state.insights],
+    latestInsight: insight,
+  })),
 
   setQueryHistory: (history) => set({ queryHistory: history }),
   addQuery: (query) => set((state) => ({ queryHistory: [query, ...state.queryHistory] })),
@@ -63,6 +73,7 @@ export const useAppStore = create<AppState>((set) => ({
   setIsUploading: (loading) => set({ isUploading: loading }),
   setIsQuerying: (loading) => set({ isQuerying: loading }),
   setShowRawData: (show) => set({ showRawData: show }),
+  setSelectedChartType: (type) => set({ selectedChartType: type }),
 
   reset: () => set(initialState),
 }));

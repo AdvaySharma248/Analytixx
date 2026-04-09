@@ -142,9 +142,9 @@
   background: #9CA3AF;
 }
 
-/* Selection color */
+/* Selection color — neutral */
 ::selection {
-  background: rgba(99, 102, 241, 0.15);
+  background: rgba(55, 65, 81, 0.1);
   color: inherit;
 }
 

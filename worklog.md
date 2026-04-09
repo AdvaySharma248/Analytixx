@@ -1,60 +1,28 @@
+# DataAI Dashboard — Worklog
+
 ---
 Task ID: 1
 Agent: Main
-Task: Explore project structure and set up foundation
+Task: Redesign post-upload dashboard to focused 2-column analytics layout
 
 Work Log:
-- Explored existing project structure (Next.js 16 with App Router)
-- Confirmed available dependencies: recharts, @tanstack/react-table, zustand, framer-motion, z-ai-web-dev-sdk
-- Installed papaparse for CSV parsing
-- Updated Prisma schema with Dataset, Insight, and Query models
-- Pushed schema to SQLite database
+- Analyzed existing codebase: page.tsx, TopNav, UploadSection, HeroInput, InsightGrid, InsightCard, ChartRenderer, DataTable, useAppStore
+- Updated Zustand store (useAppStore.ts) — added `latestInsight`, `selectedChartType`/`setSelectedChartType` for focused chart display
+- Created `src/components/analysis/DataSummaryPanel.tsx` — left panel with stacked stat cards (Total Records, Columns, Status, Data Quality, File Size, Upload Date), field tags, and latest insight summary
+- Created `src/components/analysis/MainChartPanel.tsx` — right panel hero chart with chart type segmented control (Bar/Line/Pie/Area), loading skeleton, empty state, and AI insight below chart
+- Redesigned `page.tsx` with 2-column grid layout (340px left / 1fr right), AnimatePresence transitions, compact upload card when no dataset, dashboard view with AI input bar + 2-column split
+- Updated `TopNav.tsx` — removed Upload button, added flat "D" logo lettermark, settings icon + avatar on right, subtle AI input hint in center
+- Updated `HeroInput.tsx` — neutral styling, smaller sizing, dark accent button
+- Updated `UploadSection.tsx` — compact medium card size (max-w-lg, reduced padding)
+- Updated `ChartRenderer.tsx` — neutral gray color palette (#374151, #6B7280, #9CA3AF), larger 340px chart height
+- Updated `globals.css` — neutral selection color (no more indigo tint)
+- Removed InsightGrid and InsightCard from active use (replaced by MainChartPanel)
 
 Stage Summary:
-- Project foundation ready for development
-- Database models: Dataset (CSV uploads), Insight (AI-generated analysis), Query (query history)
-- All required packages available
-
----
-Task ID: 2
-Agent: Main
-Task: Build complete AI Data Analyst Dashboard (v1)
-
-Work Log:
-- Created Zustand store with state for datasets, insights, queries, navigation
-- Built DashboardLayout with responsive sidebar
-- Built all v1 components (Sidebar, Topbar, UploadBox, QueryInput, InsightCard, DataTable)
-- Created API routes: /api/upload, /api/query, /api/datasets, /api/history
-- Database schema: Dataset, Insight, Query models
-
-Stage Summary:
-- Complete dashboard with sidebar-based layout
-- All backend APIs working
-
----
-Task ID: 3
-Agent: Main
-Task: Complete UI redesign — content-first, no-sidebar premium layout
-
-Work Log:
-- Removed sidebar entirely — replaced with floating TopNav (translucent, backdrop-blur, macOS-style)
-- Simplified Zustand store (removed sidebar states, added showRawData toggle)
-- Simplified types (removed ActiveSection)
-- Built new TopNav: floating sticky bar with DataAI logo, upload button, avatar
-- Built new UploadSection: elegant drag-drop with framer-motion morph transition to compact file card
-- Built new HeroInput: large centered search-engine-style input with suggestion chips
-- Rewrote ChartRenderer: clean minimal charts (no heavy gridlines, soft muted colors, rounded bars, donut pie)
-- Built InsightGrid: 2-column CSS grid with skeleton loading and empty states
-- Rebuilt InsightCard: hover lift, "AI Generated" badge, framer-motion staggered fade-in
-- Rebuilt DataTable: hidden by default with slide-open animation via AnimatePresence
-- Rewrote page.tsx: centered max-w-[1200px] layout, generous spacing, conditional sections
-- Updated globals.css: thin scrollbar, antialiased fonts, indigo selection color
-
-Stage Summary:
-- Complete premium redesign following Notion/Linear/Arc aesthetic
-- No sidebar, content-first centered workspace
-- Floating translucent top navigation
-- Hero-style AI input as main interaction point
-- 2-column insight card grid with staggered animations
-- Expandable data table with smooth transitions
-- Color palette: #F7F8FA bg, #6366F1 accent, soft muted tones
+- Focused analytics layout: 35% data summary left, 65% main chart right
+- All colors neutral — no gradients, no neon, no indigo
+- Chart type switcher via segmented control (not colorful buttons)
+- Stacked stat cards with icons instead of horizontal cards
+- AI insight appears below chart and in left sidebar summary
+- Smooth 200-400ms transitions, no over-animation
+- Server running on port 3000, page compiles clean (200 OK)
