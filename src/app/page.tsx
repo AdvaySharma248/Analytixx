@@ -5,13 +5,14 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Table2 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import TopNav from '@/components/layout/TopNav';
+import LoginView from '@/components/auth/LoginView';
 import UploadSection from '@/components/upload/UploadSection';
 import HeroInput from '@/components/ai/HeroInput';
 import DataSummaryPanel from '@/components/analysis/DataSummaryPanel';
 import MainChartPanel from '@/components/analysis/MainChartPanel';
 import DataTable from '@/components/table/DataTable';
 
-export default function DashboardPage() {
+function DashboardView() {
   const {
     activeDataset,
     showRawData,
@@ -19,7 +20,6 @@ export default function DashboardPage() {
     setDatasets,
     setQueryHistory,
     setActiveDataset,
-    setInsights,
   } = useAppStore();
 
   // Fetch initial data on mount
@@ -51,9 +51,8 @@ export default function DashboardPage() {
   }, [setDatasets, setQueryHistory, setActiveDataset]);
 
   return (
-    <div className="min-h-screen bg-[#F7F8FA]">
+    <>
       <TopNav />
-
       <main className="max-w-[1200px] mx-auto px-6 pt-24 pb-16">
         {/* Upload / Hero Input Section */}
         {!activeDataset && (
@@ -63,10 +62,7 @@ export default function DashboardPage() {
             transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
             className="pt-8"
           >
-            {/* Upload card */}
             <UploadSection />
-
-            {/* Placeholder for AI input (disabled until data loaded) */}
             <div className="mt-8">
               <HeroInput />
             </div>
@@ -83,21 +79,15 @@ export default function DashboardPage() {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
             >
-              {/* AI Input bar — compact, always visible */}
               <div className="mb-8">
                 <HeroInput />
               </div>
 
-              {/* 2-column layout */}
               <div className="grid grid-cols-1 md:grid-cols-[340px_1fr] gap-6 items-start">
-                {/* Left: Data Summary (35%) */}
                 <DataSummaryPanel />
-
-                {/* Right: Main Chart (65%) */}
                 <MainChartPanel />
               </div>
 
-              {/* Raw Data toggle */}
               <div className="mt-8">
                 <button
                   onClick={() => setShowRawData(!showRawData)}
@@ -117,6 +107,37 @@ export default function DashboardPage() {
           )}
         </AnimatePresence>
       </main>
-    </div>
+    </>
+  );
+}
+
+export default function DashboardPage() {
+  const { isLoggedIn } = useAppStore();
+
+  return (
+    <AnimatePresence mode="wait">
+      {isLoggedIn ? (
+        <motion.div
+          key="dashboard"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.25 }}
+          className="min-h-screen bg-[#F7F8FA]"
+        >
+          <DashboardView />
+        </motion.div>
+      ) : (
+        <motion.div
+          key="login"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.25 }}
+        >
+          <LoginView />
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

@@ -4,6 +4,10 @@ import type { Dataset, Insight, QueryHistory } from '@/types';
 type ChartType = 'bar' | 'line' | 'pie' | 'area';
 
 interface AppState {
+  // Auth
+  isLoggedIn: boolean;
+  setIsLoggedIn: (v: boolean) => void;
+
   // Data
   datasets: Dataset[];
   setDatasets: (datasets: Dataset[]) => void;
@@ -33,11 +37,12 @@ interface AppState {
   selectedChartType: ChartType;
   setSelectedChartType: (type: ChartType) => void;
 
-  // Reset
+  // Reset (logout)
   reset: () => void;
 }
 
 const initialState = {
+  isLoggedIn: false,
   datasets: [] as Dataset[],
   activeDataset: null as Dataset | null,
   insights: [] as Insight[],
@@ -51,6 +56,8 @@ const initialState = {
 
 export const useAppStore = create<AppState>((set) => ({
   ...initialState,
+
+  setIsLoggedIn: (v) => set({ isLoggedIn: v }),
 
   setDatasets: (datasets) => set({ datasets }),
   addDataset: (dataset) => set((state) => ({ datasets: [dataset, ...state.datasets] })),
