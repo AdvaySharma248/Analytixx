@@ -326,7 +326,7 @@ export default function AuthView() {
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Sign in failed.';
-      const isVerificationRecovery = /fresh verification email/i.test(message);
+      const isVerificationRecovery = /another verification email/i.test(message);
 
       setFeedback({
         type: isVerificationRecovery ? 'success' : 'error',

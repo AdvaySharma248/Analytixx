@@ -2,7 +2,6 @@
 
 import {
   createUserWithEmailAndPassword,
-  deleteUser,
   getIdToken,
   reload,
   sendEmailVerification,
@@ -24,6 +23,9 @@ type ApiResponse<T> = {
   error?: string;
   code?: string;
 } & T;
+
+const VERIFICATION_RESEND_COOLDOWN_MS = 10 * 60 * 1000;
+const VERIFICATION_RESEND_KEY_PREFIX = "analytixx:verify-resend";
 
 async function parseResponse<T>(response: Response): Promise<ApiResponse<T>> {
   const text = await response.text();
@@ -124,7 +126,54 @@ function isUnauthorizedContinueUrlError(error: unknown) {
   return code === "auth/unauthorized-continue-uri" || code === "auth/invalid-continue-uri";
 }
 
+function getVerificationResendStorageKey(email: string) {
+  return `${VERIFICATION_RESEND_KEY_PREFIX}:${email.trim().toLowerCase()}`;
+}
+
+function recordVerificationResendAttempt(email: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(getVerificationResendStorageKey(email), String(Date.now()));
+  } catch {
+    // Ignore storage failures so auth can continue working.
+  }
+}
+
+function getVerificationResendCooldownRemainingMs(email: string) {
+  if (typeof window === "undefined") {
+    return 0;
+  }
+
+  try {
+    const rawValue = window.localStorage.getItem(getVerificationResendStorageKey(email));
+    if (!rawValue) {
+      return 0;
+    }
+
+    const lastAttempt = Number(rawValue);
+    if (!Number.isFinite(lastAttempt)) {
+      return 0;
+    }
+
+    return Math.max(0, VERIFICATION_RESEND_COOLDOWN_MS - (Date.now() - lastAttempt));
+  } catch {
+    return 0;
+  }
+}
+
+function formatCooldownWindow(remainingMs: number) {
+  const minutes = Math.max(1, Math.ceil(remainingMs / 60_000));
+  return `${minutes} minute${minutes === 1 ? "" : "s"}`;
+}
+
 async function sendFirebaseVerificationEmail(user: Parameters<typeof sendEmailVerification>[0]) {
+  if (user.email) {
+    recordVerificationResendAttempt(user.email);
+  }
+
   try {
     await sendEmailVerification(user, {
       url: getFirebaseActionUrl(),
@@ -135,56 +184,8 @@ async function sendFirebaseVerificationEmail(user: Parameters<typeof sendEmailVe
     }
 
     // Fallback to Firebase's default verification handler when the current
-    // domain has not been added to Authorized domains in Firebase Auth yet.
-    await sendEmailVerification(user);
-  }
-}
-
-async function rollbackNewFirebaseUser(user: Parameters<typeof deleteUser>[0]) {
-  try {
-    await deleteUser(user);
-  } catch {
-    // If cleanup fails, surface the original signup error instead of masking it.
-  }
-}
-
-async function resendVerificationForExistingAccount(input: {
-  email: string;
-  password: string;
-}) {
-  const auth = requireFirebaseAuth();
-
-  try {
-    const credential = await signInWithEmailAndPassword(auth, input.email.trim(), input.password);
-    await reload(credential.user);
-
-    if (credential.user.emailVerified) {
-      throw new Error("This email is already registered and already verified. Please sign in instead.");
-    }
-
-    await sendFirebaseVerificationEmail(credential.user);
-
-    return {
-      message: "This email is already registered but not verified. We've sent a fresh verification email.",
-      previewUrl: null,
-      verificationUrl: null,
-    };
-  } catch (error) {
-    const code = getErrorCode(error);
-
-    if (
-      code === "auth/wrong-password"
-      || code === "auth/invalid-credential"
-      || code === "auth/user-not-found"
-    ) {
-      throw new Error(
-        "This email is already registered. Sign in with the same password to resend the verification email.",
-      );
-    }
-
-    throw error;
-  } finally {
-    await signOutFromFirebase(auth).catch(() => undefined);
+      // domain has not been added to Authorized domains in Firebase Auth yet.
+      await sendEmailVerification(user);
   }
 }
 
@@ -217,16 +218,21 @@ export async function signUpWithEmail(input: {
     try {
       const credential = await createUserWithEmailAndPassword(auth, trimmedEmail, input.password);
 
-      try {
-        if (trimmedName.length > 0) {
-          await updateProfile(credential.user, {
-            displayName: trimmedName,
-          });
-        }
+      if (trimmedName.length > 0) {
+        await updateProfile(credential.user, {
+          displayName: trimmedName,
+        });
+      }
 
+      try {
         await sendFirebaseVerificationEmail(credential.user);
       } catch (error) {
-        await rollbackNewFirebaseUser(credential.user);
+        if (getErrorCode(error) === "auth/too-many-requests") {
+          throw new Error(
+            "Your account was created, but Firebase temporarily blocked the verification email. Wait 10-30 minutes, then sign in once to try again.",
+          );
+        }
+
         throw error;
       }
 
@@ -239,10 +245,9 @@ export async function signUpWithEmail(input: {
       };
     } catch (error) {
       if (getErrorCode(error) === "auth/email-already-in-use") {
-        return await resendVerificationForExistingAccount({
-          email: trimmedEmail,
-          password: input.password,
-        });
+        throw new Error(
+          "This email is already registered. Please sign in instead. If it is not verified yet, wait a bit and then sign in once to request another verification email.",
+        );
       }
 
       throw error;
@@ -254,22 +259,37 @@ export async function signUpWithEmail(input: {
 
 export async function signInWithEmail(input: { email: string; password: string }) {
   const auth = requireFirebaseAuth();
+  const trimmedEmail = input.email.trim();
 
   try {
     const credential = await signInWithEmailAndPassword(
       auth,
-      input.email.trim(),
+      trimmedEmail,
       input.password,
     );
     await reload(credential.user);
 
     if (!credential.user.emailVerified) {
+      const cooldownRemainingMs = getVerificationResendCooldownRemainingMs(trimmedEmail);
+
       try {
+        if (cooldownRemainingMs > 0) {
+          throw new Error(
+            `Your email is not verified yet. A verification email was already requested recently. Please wait ${formatCooldownWindow(cooldownRemainingMs)} before trying again.`,
+          );
+        }
+
         await sendFirebaseVerificationEmail(credential.user);
-        throw new Error("Your email is not verified yet. We've sent a fresh verification email.");
+        throw new Error("Your email is not verified yet. We've asked Firebase to send another verification email.");
       } catch (error) {
-        if (error instanceof Error && error.message.includes("fresh verification email")) {
+        if (error instanceof Error && error.message.includes("verification email")) {
           throw error;
+        }
+
+        if (getErrorCode(error) === "auth/too-many-requests") {
+          throw new Error(
+            "Your account exists, but Firebase is temporarily blocking verification emails. Wait 10-30 minutes, then sign in once again.",
+          );
         }
 
         throw new Error(
