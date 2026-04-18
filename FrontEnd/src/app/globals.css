@@ -1,0 +1,432 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-satoshi), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-serif: var(--font-satoshi), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, SFMono-Regular, monospace;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    font-kerning: normal;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    @apply bg-background text-foreground;
+    line-height: 1.55;
+    letter-spacing: 0;
+    font-feature-settings: "cv11" 1, "ss01" 1, "kern" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  button,
+  input,
+  textarea,
+  select {
+    letter-spacing: normal;
+  }
+}
+
+.brand-wordmark {
+  letter-spacing: -0.045em;
+}
+
+.brand-display {
+  letter-spacing: -0.05em;
+}
+
+.dashboard-section-kicker {
+  color: #6B7280;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dashboard-title {
+  color: #111827;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.035em;
+}
+
+.dashboard-subtitle {
+  color: #4B5563;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.dashboard-label {
+  color: #6B7280;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dashboard-value {
+  color: #111827;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+.dashboard-body {
+  color: #4B5563;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.dashboard-muted {
+  color: #6B7280;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.dark .dashboard-section-kicker,
+.dark .dashboard-label,
+.dark .dashboard-muted {
+  color: #9CA3AF;
+}
+
+.dark .dashboard-title {
+  color: #F3F4F6;
+}
+
+.dark .dashboard-subtitle,
+.dark .dashboard-body {
+  color: #D1D5DB;
+}
+
+/* ─── Smooth theme transition (global) ─── */
+html.transitioning,
+html.transitioning *,
+html.transitioning *::before,
+html.transitioning *::after {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, fill 0.3s ease, stroke 0.3s ease !important;
+}
+
+/* Thin custom scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D1D5DB;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9CA3AF;
+}
+
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Selection color — neutral */
+::selection {
+  background: rgba(55, 65, 81, 0.1);
+  color: inherit;
+}
+
+.dark ::selection {
+  background: rgba(255, 255, 255, 0.12);
+  color: inherit;
+}
+
+/* Smooth transitions for interactive elements */
+button, a, input, [role="button"] {
+  transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Subtle focus styles */
+input:focus, textarea:focus {
+  outline: none;
+}
+
+/* Chart tooltip shadow */
+.recharts-tooltip-wrapper {
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.08));
+}
+
+.dark .recharts-tooltip-wrapper {
+  filter: drop-shadow(0 2px 12px rgba(0, 0, 0, 0.3));
+}
+
+/* ─── Ambient smoke / wind effect ─── */
+.smoke-container {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.smoke-blob {
+  position: absolute;
+  border-radius: 50%;
+  will-change: transform;
+}
+
+/* Layer 1 — large, slow, foreground */
+.smoke-blob--1 {
+  width: 700px;
+  height: 350px;
+  top: 10%;
+  right: -200px;
+  background: radial-gradient(closest-side, rgba(180, 195, 215, 0.12) 0%, transparent 100%);
+  animation: smokeFloat1 25s ease-in-out infinite;
+  opacity: 0.2;
+}
+
+/* Layer 2 — medium, mid-speed */
+.smoke-blob--2 {
+  width: 500px;
+  height: 280px;
+  top: 50%;
+  right: -100px;
+  background: radial-gradient(closest-side, rgba(200, 210, 225, 0.10) 0%, transparent 100%);
+  animation: smokeFloat2 30s ease-in-out infinite;
+  opacity: 0.15;
+}
+
+/* Layer 3 — smaller, faster, higher */
+.smoke-blob--3 {
+  width: 400px;
+  height: 200px;
+  top: 25%;
+  right: -50px;
+  background: radial-gradient(closest-side, rgba(220, 225, 235, 0.08) 0%, transparent 100%);
+  animation: smokeFloat3 20s ease-in-out infinite;
+  opacity: 0.15;
+}
+
+/* Layer 4 — wide, slow, bottom */
+.smoke-blob--4 {
+  width: 900px;
+  height: 250px;
+  bottom: 5%;
+  right: -300px;
+  background: radial-gradient(closest-side, rgba(190, 200, 218, 0.07) 0%, transparent 100%);
+  animation: smokeFloat4 35s ease-in-out infinite;
+  opacity: 0.12;
+}
+
+/* Layer 5 — small accent, upper area */
+.smoke-blob--5 {
+  width: 350px;
+  height: 180px;
+  top: 5%;
+  right: 20%;
+  background: radial-gradient(closest-side, rgba(210, 218, 230, 0.06) 0%, transparent 100%);
+  animation: smokeFloat5 22s ease-in-out infinite;
+  opacity: 0.1;
+}
+
+/* Dark mode smoke — cooler, dimmer tones */
+.dark .smoke-blob--1 {
+  background: radial-gradient(closest-side, rgba(100, 120, 160, 0.08) 0%, transparent 100%);
+  opacity: 0.15;
+}
+.dark .smoke-blob--2 {
+  background: radial-gradient(closest-side, rgba(120, 140, 180, 0.06) 0%, transparent 100%);
+  opacity: 0.12;
+}
+.dark .smoke-blob--3 {
+  background: radial-gradient(closest-side, rgba(140, 155, 190, 0.05) 0%, transparent 100%);
+  opacity: 0.1;
+}
+.dark .smoke-blob--4 {
+  background: radial-gradient(closest-side, rgba(110, 130, 170, 0.04) 0%, transparent 100%);
+  opacity: 0.1;
+}
+.dark .smoke-blob--5 {
+  background: radial-gradient(closest-side, rgba(130, 145, 175, 0.04) 0%, transparent 100%);
+  opacity: 0.08;
+}
+
+/* Organic wobble + right-to-left drift */
+@keyframes smokeFloat1 {
+  0%   { transform: translateX(0) translateY(0) scale(1) rotate(0deg); }
+  25%  { transform: translateX(-8%) translateY(15px) scale(1.03) rotate(1deg); }
+  50%  { transform: translateX(-18%) translateY(-10px) scale(0.97) rotate(-1deg); }
+  75%  { transform: translateX(-10%) translateY(8px) scale(1.02) rotate(0.5deg); }
+  100% { transform: translateX(0) translateY(0) scale(1) rotate(0deg); }
+}
+
+@keyframes smokeFloat2 {
+  0%   { transform: translateX(0) translateY(0) scale(1); }
+  30%  { transform: translateX(-12%) translateY(-20px) scale(1.05); }
+  60%  { transform: translateX(-25%) translateY(10px) scale(0.96); }
+  100% { transform: translateX(0) translateY(0) scale(1); }
+}
+
+@keyframes smokeFloat3 {
+  0%   { transform: translateX(0) translateY(0) rotate(0deg); }
+  20%  { transform: translateX(-15%) translateY(-12px) rotate(2deg); }
+  50%  { transform: translateX(-30%) translateY(5px) rotate(-1deg); }
+  80%  { transform: translateX(-15%) translateY(-8px) rotate(1deg); }
+  100% { transform: translateX(0) translateY(0) rotate(0deg); }
+}
+
+@keyframes smokeFloat4 {
+  0%   { transform: translateX(0) translateY(0) scale(1); }
+  35%  { transform: translateX(-10%) translateY(12px) scale(1.04); }
+  65%  { transform: translateX(-22%) translateY(-8px) scale(0.98); }
+  100% { transform: translateX(0) translateY(0) scale(1); }
+}
+
+@keyframes smokeFloat5 {
+  0%   { transform: translateX(0) translateY(0); }
+  40%  { transform: translateX(-18%) translateY(-15px); }
+  70%  { transform: translateX(-8%) translateY(8px); }
+  100% { transform: translateX(0) translateY(0); }
+}
+
+/* ─── Auth left-panel scrollbar ─── */
+.auth-left-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.auth-left-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.auth-left-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.auth-left-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.auth-left-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}

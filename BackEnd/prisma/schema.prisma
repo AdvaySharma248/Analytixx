@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Post {
+  id        String   @id @default(cuid())
+  title     String
+  content   String?
+  published Boolean  @default(false)
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Dataset {
+  id                 String   @id @default(cuid())
+  filename           String
+  rowCount           Int
+  columnCount        Int
+  columns            String   // JSON array of column names
+  dataPreview        String   // JSON array of first 10 rows
+  fileSize           Int
+  storageDirectory   String   @default("")
+  originalFilePath   String   @default("")
+  normalizedFilePath String   @default("")
+  profilePath        String   @default("")
+  profileJson        String   @default("{}") // JSON dataset profile
+  qualitySummary     String   @default("{}") // JSON data quality summary
+  inferredTypes      String   @default("{}") // JSON map of column => inferred type
+  ingestionStatus    String   @default("ready")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @default(now()) @updatedAt
+  
+  insights Insight[]
+  queries  Query[]
+}
+
+model Insight {
+  id        String   @id @default(cuid())
+  datasetId String
+  dataset   Dataset   @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  query     String   // User's natural language query
+  title     String   // AI-generated title
+  summary   String   // AI-generated summary
+  chartType String   // "bar" | "line" | "pie" | "area"
+  chartData String   // JSON chart data
+  createdAt DateTime @default(now())
+}
+
+model Query {
+  id        String   @id @default(cuid())
+  datasetId String
+  dataset   Dataset   @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  question  String
+  response  String
+  createdAt DateTime @default(now())
+}
