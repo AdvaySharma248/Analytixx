@@ -108,12 +108,19 @@ function toAuthErrorMessage(error: unknown, fallback: string) {
       return "Too many attempts. Please try again in a moment.";
     case "auth/network-request-failed":
       return "Network error. Please check your connection and try again.";
+    case "auth/operation-not-allowed":
+      return "Firebase Email/Password sign-in is not enabled for this project.";
     case "auth/unauthorized-continue-uri":
     case "auth/invalid-continue-uri":
       return "Firebase email verification is not configured for this domain yet.";
     default:
       return error instanceof Error && error.message ? error.message : fallback;
   }
+}
+
+function isUnauthorizedContinueUrlError(error: unknown) {
+  const code = getErrorCode(error);
+  return code === "auth/unauthorized-continue-uri" || code === "auth/invalid-continue-uri";
 }
 
 async function createBackendSessionFromFirebaseIdToken(idToken: string) {
@@ -152,9 +159,19 @@ export async function signUpWithEmail(input: {
       });
     }
 
-    await sendEmailVerification(credential.user, {
-      url: getFirebaseActionUrl(),
-    });
+    try {
+      await sendEmailVerification(credential.user, {
+        url: getFirebaseActionUrl(),
+      });
+    } catch (error) {
+      if (!isUnauthorizedContinueUrlError(error)) {
+        throw error;
+      }
+
+      // Fallback to Firebase's default verification handler when the current
+      // domain has not been added to Authorized domains in Firebase Auth yet.
+      await sendEmailVerification(credential.user);
+    }
     await signOutFromFirebase(auth);
 
     return {
