@@ -40,7 +40,7 @@ export const metadata: Metadata = {
   keywords: ["Analytixx", "analytics", "AI dashboard", "data visualization", "CSV analysis"],
   authors: [{ name: "Analytixx" }],
   icons: {
-    icon: "/favicon.svg?v=2",
+    icon: "/logo.svg?v=2",
   },
   openGraph: {
     type: "website",
