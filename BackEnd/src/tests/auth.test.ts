@@ -33,6 +33,7 @@ if (prismaPush.status !== 0) {
 
 const { createApp } = await import("../app.js");
 const { db } = await import("../lib/db.js");
+const { setFirebaseIdTokenVerifierForTests } = await import("../lib/firebase-auth.js");
 
 let server: Server;
 let baseUrl = "";
@@ -101,6 +102,23 @@ async function loginUser(email: string, password = "Password123!") {
   };
 }
 
+async function createFirebaseSessionForUser(idToken: string) {
+  const response = await fetch(`${baseUrl}/api/auth/firebase/session`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      idToken,
+    }),
+  });
+
+  return {
+    response,
+    payload: await readJson<{ error?: string; user?: { id: string; email: string; name: string } }>(response),
+  };
+}
+
 async function uploadDataset(cookie: string) {
   const formData = new FormData();
   formData.append(
@@ -138,6 +156,7 @@ before(async () => {
 });
 
 beforeEach(async () => {
+  setFirebaseIdTokenVerifierForTests(null);
   await db.authSession.deleteMany();
   await db.emailVerificationToken.deleteMany();
   await db.insight.deleteMany();
@@ -251,4 +270,52 @@ test("different users only see their own datasets and history", async () => {
   assert.equal(historyOne.length, 1);
   assert.equal(historyOne[0]?.question, "How many rows are there?");
   assert.equal(historyTwo.length, 0);
+});
+
+test("firebase session route creates a backend session for verified firebase users", async () => {
+  setFirebaseIdTokenVerifierForTests(async (idToken) => {
+    assert.equal(idToken, "verified-firebase-token");
+
+    return {
+      uid: "firebase-user-1",
+      email: "firebase@example.com",
+      name: "Firebase User",
+      emailVerified: true,
+    };
+  });
+
+  const { response, payload } = await createFirebaseSessionForUser("verified-firebase-token");
+  assert.equal(response.status, 200);
+  assert.equal(payload.user?.email, "firebase@example.com");
+  assert.equal(payload.user?.name, "Firebase User");
+
+  const storedUser = await db.user.findUnique({
+    where: { email: "firebase@example.com" },
+  });
+  assert.equal(storedUser?.isVerified, true);
+
+  const cookie = getCookie(response);
+  const sessionResponse = await fetch(`${baseUrl}/api/auth/session`, {
+    headers: {
+      cookie,
+    },
+  });
+  const sessionPayload = await readJson<{ user: { email: string } }>(sessionResponse);
+
+  assert.equal(sessionResponse.status, 200);
+  assert.equal(sessionPayload.user.email, "firebase@example.com");
+});
+
+test("firebase session route rejects unverified firebase users", async () => {
+  setFirebaseIdTokenVerifierForTests(async () => ({
+    uid: "firebase-user-2",
+    email: "pending-firebase@example.com",
+    name: "Pending Firebase User",
+    emailVerified: false,
+  }));
+
+  const { response, payload } = await createFirebaseSessionForUser("pending-firebase-token");
+  assert.equal(response.status, 403);
+  assert.equal(payload.error, "Please verify your email first.");
+  assert.equal(response.headers.get("set-cookie"), null);
 });

@@ -1,10 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import { applyActionCode, reload } from 'firebase/auth';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 
 import { verifyEmailAddress } from '@/lib/auth-client';
+import { getFirebaseAuthClient } from '@/lib/firebase-auth';
 
 type VerifyState = 'loading' | 'success' | 'error';
 
@@ -33,6 +35,9 @@ function VerifyPageContent() {
   const [message, setMessage] = useState('Verifying your email...');
 
   const token = searchParams.get('token');
+  const source = searchParams.get('source');
+  const mode = searchParams.get('mode');
+  const oobCode = searchParams.get('oobCode');
 
   useEffect(() => {
     setMounted(true);
@@ -43,19 +48,47 @@ function VerifyPageContent() {
       return;
     }
 
-    if (!token) {
-      setStatus('error');
-      setMessage('Verification token is missing.');
-      return;
-    }
-
-    const verificationToken = token;
-
     let active = true;
 
     async function runVerification() {
       try {
-        const result = await verifyEmailAddress(verificationToken);
+        if (mode === 'verifyEmail' && oobCode) {
+          const auth = getFirebaseAuthClient();
+
+          if (!auth) {
+            throw new Error('Firebase authentication is not configured in this app.');
+          }
+
+          await applyActionCode(auth, oobCode);
+
+          if (auth.currentUser) {
+            await reload(auth.currentUser);
+          }
+
+          if (!active) {
+            return;
+          }
+
+          setStatus('success');
+          setMessage('Email verified successfully. You can now sign in.');
+          return;
+        }
+
+        if (source === 'firebase') {
+          if (!active) {
+            return;
+          }
+
+          setStatus('success');
+          setMessage('Email verified successfully. You can now sign in.');
+          return;
+        }
+
+        if (!token) {
+          throw new Error('Verification token is missing.');
+        }
+
+        const result = await verifyEmailAddress(token);
         if (!active) {
           return;
         }
@@ -77,7 +110,7 @@ function VerifyPageContent() {
     return () => {
       active = false;
     };
-  }, [mounted, token]);
+  }, [mode, mounted, oobCode, source, token]);
 
   if (!mounted) {
     return null;

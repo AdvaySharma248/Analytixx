@@ -7,6 +7,7 @@ import {
   verifyPassword,
 } from "../lib/auth.js";
 import { env } from "../config/env.js";
+import { verifyFirebaseIdToken } from "../lib/firebase-auth.js";
 import { ensureMailDeliveryReady, sendVerificationEmail } from "./mail-service.js";
 
 function normalizeEmail(email: string) {
@@ -35,6 +36,29 @@ function toSafeUser(user: {
     email: user.email,
     name: getDisplayName(user.name, user.email),
     isVerified: user.isVerified,
+  };
+}
+
+async function createSessionForUser(user: {
+  id: string;
+  email: string;
+  name: string | null;
+  isVerified: boolean;
+}) {
+  const sessionToken = createOpaqueToken();
+  const session = await db.authSession.create({
+    data: {
+      userId: user.id,
+      tokenHash: hashOpaqueToken(sessionToken),
+      expiresAt: new Date(Date.now() + env.authSessionTtlMs),
+    },
+  });
+
+  return {
+    user: toSafeUser(user),
+    sessionToken,
+    sessionId: session.id,
+    expiresAt: session.expiresAt,
   };
 }
 
@@ -210,21 +234,40 @@ export async function loginUser(input: { email: string; password: string }) {
     });
   }
 
-  const sessionToken = createOpaqueToken();
-  const session = await db.authSession.create({
-    data: {
-      userId: user.id,
-      tokenHash: hashOpaqueToken(sessionToken),
-      expiresAt: new Date(Date.now() + env.authSessionTtlMs),
-    },
+  return createSessionForUser(user);
+}
+
+export async function createFirebaseSession(input: { idToken: string }) {
+  const claims = await verifyFirebaseIdToken(input.idToken);
+
+  if (!claims.emailVerified) {
+    throw new AppError(403, "Please verify your email first.", "EMAIL_NOT_VERIFIED");
+  }
+
+  const existingUser = await db.user.findUnique({
+    where: { email: claims.email },
   });
 
-  return {
-    user: toSafeUser(user),
-    sessionToken,
-    sessionId: session.id,
-    expiresAt: session.expiresAt,
-  };
+  const user = existingUser
+    ? await db.user.update({
+        where: { id: existingUser.id },
+        data: {
+          name: claims.name ?? existingUser.name,
+          isVerified: true,
+          verificationTokens: {
+            deleteMany: {},
+          },
+        },
+      })
+    : await db.user.create({
+        data: {
+          email: claims.email,
+          name: claims.name,
+          isVerified: true,
+        },
+      });
+
+  return createSessionForUser(user);
 }
 
 export async function logoutUser(sessionToken: string | null) {

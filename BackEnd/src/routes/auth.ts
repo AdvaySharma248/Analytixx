@@ -4,6 +4,7 @@ import { z } from "zod";
 import { createClearedSessionCookie, createSessionCookie, getSessionTokenFromRequest } from "../lib/auth.js";
 import { AppError, asyncHandler } from "../lib/errors.js";
 import {
+  createFirebaseSession,
   loginUser,
   logoutUser,
   signUpUser,
@@ -21,6 +22,10 @@ const signUpSchema = z.object({
 const loginSchema = z.object({
   email: z.string().trim().email(),
   password: z.string().min(1).max(128),
+});
+
+const firebaseSessionSchema = z.object({
+  idToken: z.string().trim().min(1),
 });
 
 router.get(
@@ -59,6 +64,24 @@ router.post(
     }
 
     const result = await loginUser(parsed.data);
+    response.setHeader("Set-Cookie", createSessionCookie(result.sessionToken));
+    response.json({
+      message: "Authenticated",
+      user: result.user,
+    });
+  }),
+);
+
+router.post(
+  "/firebase/session",
+  asyncHandler(async (request, response) => {
+    const parsed = firebaseSessionSchema.safeParse(request.body);
+
+    if (!parsed.success) {
+      throw new AppError(400, "Firebase ID token is required.", "FIREBASE_ID_TOKEN_REQUIRED");
+    }
+
+    const result = await createFirebaseSession(parsed.data);
     response.setHeader("Set-Cookie", createSessionCookie(result.sessionToken));
     response.json({
       message: "Authenticated",
