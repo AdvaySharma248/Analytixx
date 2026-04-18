@@ -96,6 +96,7 @@ const isProduction = data.NODE_ENV === "production";
 const isHostedEnvironment = Boolean(
   process.env.RENDER || process.env.RENDER_EXTERNAL_HOSTNAME || process.env.RAILWAY_ENVIRONMENT,
 );
+const emailVerificationEnabled = data.NODE_ENV === "test" || Boolean(data.SMTP_HOST);
 
 if ((data.SMTP_USER && !data.SMTP_PASS) || (!data.SMTP_USER && data.SMTP_PASS)) {
   throw new Error(
@@ -114,6 +115,7 @@ export const env = {
   ...data,
   isProduction,
   isHostedEnvironment,
+  emailVerificationEnabled,
   host: data.HOST ?? "0.0.0.0",
   trustProxy: data.TRUST_PROXY ?? (isProduction || isHostedEnvironment ? 1 : false),
   cookieDomain: data.COOKIE_DOMAIN ?? undefined,

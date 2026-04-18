@@ -38,19 +38,31 @@ function toSafeUser(user: {
   };
 }
 
+function createVerificationToken() {
+  const plainToken = createOpaqueToken();
+
+  return {
+    plainToken,
+    tokenHash: hashOpaqueToken(plainToken),
+    expiresAt: new Date(Date.now() + env.verifyTokenTtlMs),
+  };
+}
+
 export async function signUpUser(input: {
   name: string;
   email: string;
   password: string;
 }) {
-  await ensureMailDeliveryReady();
+  const requiresEmailVerification = env.emailVerificationEnabled;
+
+  if (requiresEmailVerification) {
+    await ensureMailDeliveryReady();
+  }
 
   const email = normalizeEmail(input.email);
   const name = input.name.trim();
   const passwordHash = await hashPassword(input.password);
-  const expiresAt = new Date(Date.now() + env.verifyTokenTtlMs);
-  const plainToken = createOpaqueToken();
-  const tokenHash = hashOpaqueToken(plainToken);
+  const verificationToken = requiresEmailVerification ? createVerificationToken() : null;
 
   const existingUser = await db.user.findUnique({
     where: { email },
@@ -72,14 +84,18 @@ export async function signUpUser(input: {
       data: {
         name,
         passwordHash,
-        isVerified: false,
-        verificationTokens: {
-          deleteMany: {},
-          create: {
-            tokenHash,
-            expiresAt,
-          },
-        },
+        isVerified: !requiresEmailVerification,
+        verificationTokens: verificationToken
+          ? {
+              deleteMany: {},
+              create: {
+                tokenHash: verificationToken.tokenHash,
+                expiresAt: verificationToken.expiresAt,
+              },
+            }
+          : {
+              deleteMany: {},
+            },
       },
     });
     userId = updatedUser.id;
@@ -89,22 +105,36 @@ export async function signUpUser(input: {
         email,
         name,
         passwordHash,
-        isVerified: false,
-        verificationTokens: {
-          create: {
-            tokenHash,
-            expiresAt,
-          },
-        },
+        isVerified: !requiresEmailVerification,
+        ...(verificationToken
+          ? {
+              verificationTokens: {
+                create: {
+                  tokenHash: verificationToken.tokenHash,
+                  expiresAt: verificationToken.expiresAt,
+                },
+              },
+            }
+          : {}),
       },
     });
     userId = createdUser.id;
   }
 
+  if (!requiresEmailVerification || !verificationToken) {
+    return {
+      userId,
+      message: "Account created. You can now sign in.",
+      deliveryMode: null,
+      previewUrl: null,
+      verificationUrl: null,
+    };
+  }
+
   const mailResult = await sendVerificationEmail({
     email,
     name: getDisplayName(name, email),
-    token: plainToken,
+    token: verificationToken.plainToken,
   });
 
   return {
@@ -156,7 +186,7 @@ export async function verifyUserEmail(token: string) {
 
 export async function loginUser(input: { email: string; password: string }) {
   const email = normalizeEmail(input.email);
-  const user = await db.user.findUnique({
+  let user = await db.user.findUnique({
     where: { email },
   });
 
@@ -164,8 +194,20 @@ export async function loginUser(input: { email: string; password: string }) {
     throw new AppError(401, "Invalid email or password.", "INVALID_CREDENTIALS");
   }
 
-  if (!user.isVerified) {
+  if (env.emailVerificationEnabled && !user.isVerified) {
     throw new AppError(403, "Please verify your email first.", "EMAIL_NOT_VERIFIED");
+  }
+
+  if (!env.emailVerificationEnabled && !user.isVerified) {
+    user = await db.user.update({
+      where: { id: user.id },
+      data: {
+        isVerified: true,
+        verificationTokens: {
+          deleteMany: {},
+        },
+      },
+    });
   }
 
   const sessionToken = createOpaqueToken();
@@ -220,7 +262,7 @@ export async function getUserFromSessionToken(sessionToken: string) {
     return null;
   }
 
-  if (!session.user.isVerified) {
+  if (env.emailVerificationEnabled && !session.user.isVerified) {
     await db.authSession.delete({
       where: {
         id: session.id,
@@ -229,9 +271,21 @@ export async function getUserFromSessionToken(sessionToken: string) {
     return null;
   }
 
+  const user = !env.emailVerificationEnabled && !session.user.isVerified
+    ? await db.user.update({
+        where: { id: session.user.id },
+        data: {
+          isVerified: true,
+          verificationTokens: {
+            deleteMany: {},
+          },
+        },
+      })
+    : session.user;
+
   return {
     sessionId: session.id,
     expiresAt: session.expiresAt,
-    user: toSafeUser(session.user),
+    user: toSafeUser(user),
   };
 }

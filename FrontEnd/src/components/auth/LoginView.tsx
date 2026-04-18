@@ -349,11 +349,7 @@ export default function AuthView() {
       const result = await signUpWithEmail({ name, email, password });
       setFeedback({
         type: 'success',
-        message: result.previewUrl
-          ? 'Development preview email created.'
-          : result.verificationUrl
-            ? 'Development verification link generated.'
-            : 'Verification email sent. Please check your inbox.',
+        message: result.message,
         previewUrl: result.previewUrl ?? null,
         verificationUrl: result.verificationUrl ?? null,
       });
