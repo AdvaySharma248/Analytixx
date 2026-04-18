@@ -12,7 +12,6 @@ const databasePath = join(process.cwd(), "prisma", databaseFile);
 process.env.NODE_ENV = "test";
 process.env.DATABASE_URL = `file:./${databaseFile}`;
 process.env.FRONTEND_ORIGIN = "http://127.0.0.1:3000";
-process.env.EMAIL_FROM = "Analytixx <test@example.com>";
 
 writeFileSync(databasePath, "");
 
@@ -48,60 +47,6 @@ function getCookie(response: Response) {
   return setCookie.split(";")[0];
 }
 
-async function signUpUser(email: string, name = "Test User", password = "Password123!") {
-  const response = await fetch(`${baseUrl}/api/auth/signup`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      name,
-      email,
-      password,
-    }),
-  });
-
-  const payload = await readJson<{
-    message: string;
-    verificationUrl: string;
-  }>(response);
-
-  assert.equal(response.status, 201);
-  assert.equal(payload.message, "Verification email sent. Please check your inbox.");
-  assert.ok(payload.verificationUrl, "Expected a verification URL in the test environment.");
-
-  const token = new URL(payload.verificationUrl).searchParams.get("token");
-  assert.ok(token, "Expected a verification token in the test URL.");
-
-  return { token };
-}
-
-async function verifyUser(token: string) {
-  const response = await fetch(`${baseUrl}/api/auth/verify?token=${encodeURIComponent(token)}`);
-  const payload = await readJson<{ message: string }>(response);
-
-  assert.equal(response.status, 200);
-  assert.equal(payload.message, "Email verified successfully. You can now sign in.");
-}
-
-async function loginUser(email: string, password = "Password123!") {
-  const response = await fetch(`${baseUrl}/api/auth/login`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      email,
-      password,
-    }),
-  });
-
-  return {
-    response,
-    payload: await readJson<{ error?: string; user?: { id: string; email: string } }>(response),
-  };
-}
-
 async function createFirebaseSessionForUser(idToken: string) {
   const response = await fetch(`${baseUrl}/api/auth/firebase/session`, {
     method: "POST",
@@ -117,6 +62,19 @@ async function createFirebaseSessionForUser(idToken: string) {
     response,
     payload: await readJson<{ error?: string; user?: { id: string; email: string; name: string } }>(response),
   };
+}
+
+function mockFirebaseUsers(usersByToken: Record<string, {
+  uid: string;
+  email: string;
+  name: string;
+  emailVerified: boolean;
+}>) {
+  setFirebaseIdTokenVerifierForTests(async (idToken) => {
+    const user = usersByToken[idToken];
+    assert.ok(user, `Unexpected Firebase token: ${idToken}`);
+    return user;
+  });
 }
 
 async function uploadDataset(cookie: string) {
@@ -185,28 +143,26 @@ after(async () => {
   rmSync(join(process.cwd(), "prisma", `${databaseFile}-wal`), { force: true });
 });
 
-test("signup does not create a session and blocks login before verification", async () => {
-  const { token } = await signUpUser("pending@example.com");
-  assert.ok(token);
-
+test("unauthenticated users cannot access protected routes", async () => {
   const unauthorizedResponse = await fetch(`${baseUrl}/api/datasets`);
   const unauthorizedPayload = await readJson<{ error: string }>(unauthorizedResponse);
   assert.equal(unauthorizedResponse.status, 401);
   assert.equal(unauthorizedPayload.error, "Unauthorized");
-
-  const { response, payload } = await loginUser("pending@example.com");
-  assert.equal(response.status, 403);
-  assert.equal(payload.error, "Please verify your email first.");
-  assert.equal(response.headers.get("set-cookie"), null);
 });
 
-test("verified users can log in and access their own session", async () => {
-  const { token } = await signUpUser("verified@example.com");
-  await verifyUser(token);
+test("verified firebase users can access their own session", async () => {
+  mockFirebaseUsers({
+    "verified-firebase-token": {
+      uid: "firebase-user-1",
+      email: "firebase@example.com",
+      name: "Firebase User",
+      emailVerified: true,
+    },
+  });
 
-  const { response, payload } = await loginUser("verified@example.com");
+  const { response, payload } = await createFirebaseSessionForUser("verified-firebase-token");
   assert.equal(response.status, 200);
-  assert.equal(payload.user?.email, "verified@example.com");
+  assert.equal(payload.user?.email, "firebase@example.com");
 
   const cookie = getCookie(response);
   const sessionResponse = await fetch(`${baseUrl}/api/auth/session`, {
@@ -217,15 +173,28 @@ test("verified users can log in and access their own session", async () => {
   const sessionPayload = await readJson<{ user: { email: string } }>(sessionResponse);
 
   assert.equal(sessionResponse.status, 200);
-  assert.equal(sessionPayload.user.email, "verified@example.com");
+  assert.equal(sessionPayload.user.email, "firebase@example.com");
 });
 
-test("different users only see their own datasets and history", async () => {
-  const userOne = await signUpUser("owner@example.com", "Owner User");
-  await verifyUser(userOne.token);
-  const loginOne = await loginUser("owner@example.com");
-  const cookieOne = getCookie(loginOne.response);
-  const userOneId = loginOne.payload.user?.id;
+test("different firebase users only see their own datasets and history", async () => {
+  mockFirebaseUsers({
+    "owner-token": {
+      uid: "firebase-owner",
+      email: "owner@example.com",
+      name: "Owner User",
+      emailVerified: true,
+    },
+    "viewer-token": {
+      uid: "firebase-viewer",
+      email: "viewer@example.com",
+      name: "Viewer User",
+      emailVerified: true,
+    },
+  });
+
+  const sessionOne = await createFirebaseSessionForUser("owner-token");
+  const cookieOne = getCookie(sessionOne.response);
+  const userOneId = sessionOne.payload.user?.id;
   assert.ok(userOneId, "Expected the first user to have an id.");
 
   const upload = await uploadDataset(cookieOne);
@@ -240,10 +209,8 @@ test("different users only see their own datasets and history", async () => {
     },
   });
 
-  const userTwo = await signUpUser("viewer@example.com", "Viewer User");
-  await verifyUser(userTwo.token);
-  const loginTwo = await loginUser("viewer@example.com");
-  const cookieTwo = getCookie(loginTwo.response);
+  const sessionTwo = await createFirebaseSessionForUser("viewer-token");
+  const cookieTwo = getCookie(sessionTwo.response);
 
   const [datasetsOneResponse, datasetsTwoResponse, historyOneResponse, historyTwoResponse] =
     await Promise.all([
@@ -273,15 +240,13 @@ test("different users only see their own datasets and history", async () => {
 });
 
 test("firebase session route creates a backend session for verified firebase users", async () => {
-  setFirebaseIdTokenVerifierForTests(async (idToken) => {
-    assert.equal(idToken, "verified-firebase-token");
-
-    return {
+  mockFirebaseUsers({
+    "verified-firebase-token": {
       uid: "firebase-user-1",
       email: "firebase@example.com",
       name: "Firebase User",
       emailVerified: true,
-    };
+    },
   });
 
   const { response, payload } = await createFirebaseSessionForUser("verified-firebase-token");
@@ -307,12 +272,14 @@ test("firebase session route creates a backend session for verified firebase use
 });
 
 test("firebase session route rejects unverified firebase users", async () => {
-  setFirebaseIdTokenVerifierForTests(async () => ({
-    uid: "firebase-user-2",
-    email: "pending-firebase@example.com",
-    name: "Pending Firebase User",
-    emailVerified: false,
-  }));
+  mockFirebaseUsers({
+    "pending-firebase-token": {
+      uid: "firebase-user-2",
+      email: "pending-firebase@example.com",
+      name: "Pending Firebase User",
+      emailVerified: false,
+    },
+  });
 
   const { response, payload } = await createFirebaseSessionForUser("pending-firebase-token");
   assert.equal(response.status, 403);

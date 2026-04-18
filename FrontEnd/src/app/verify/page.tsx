@@ -5,7 +5,6 @@ import { applyActionCode, reload } from 'firebase/auth';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 
-import { verifyEmailAddress } from '@/lib/auth-client';
 import { getFirebaseAuthClient } from '@/lib/firebase-auth';
 
 type VerifyState = 'loading' | 'success' | 'error';
@@ -34,7 +33,6 @@ function VerifyPageContent() {
   const [status, setStatus] = useState<VerifyState>('loading');
   const [message, setMessage] = useState('Verifying your email...');
 
-  const token = searchParams.get('token');
   const source = searchParams.get('source');
   const mode = searchParams.get('mode');
   const oobCode = searchParams.get('oobCode');
@@ -84,17 +82,7 @@ function VerifyPageContent() {
           return;
         }
 
-        if (!token) {
-          throw new Error('Verification token is missing.');
-        }
-
-        const result = await verifyEmailAddress(token);
-        if (!active) {
-          return;
-        }
-
-        setStatus('success');
-        setMessage(result.message);
+        throw new Error('Firebase verification link is missing or invalid.');
       } catch (error) {
         if (!active) {
           return;
@@ -110,7 +98,7 @@ function VerifyPageContent() {
     return () => {
       active = false;
     };
-  }, [mode, mounted, oobCode, source, token]);
+  }, [mode, mounted, oobCode, source]);
 
   if (!mounted) {
     return null;

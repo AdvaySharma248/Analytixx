@@ -65,15 +65,8 @@ const envSchema = z.object({
   CORS_ALLOWED_ORIGINS: originList,
   COOKIE_DOMAIN: optionalString,
   TRUST_PROXY: trustProxySetting,
-  EMAIL_FROM: z.string().trim().min(1).default("Analytixx <no-reply@analytixx.local>"),
-  SMTP_HOST: optionalString,
-  SMTP_PORT: z.coerce.number().int().positive().default(587),
-  SMTP_SECURE: booleanFlag,
-  SMTP_USER: optionalString,
-  SMTP_PASS: optionalString,
   AUTH_SESSION_COOKIE_NAME: z.string().trim().min(1).default("analytixx_session"),
   AUTH_SESSION_TTL_HOURS: z.coerce.number().positive().default(24 * 7),
-  VERIFY_TOKEN_TTL_HOURS: z.coerce.number().positive().default(24),
   FIREBASE_API_KEY: z.string().trim().min(1).optional(),
   FIREBASE_AUTH_DOMAIN: z.string().trim().min(1).optional(),
   FIREBASE_PROJECT_ID: z.string().trim().min(1).optional(),
@@ -96,13 +89,6 @@ const isProduction = data.NODE_ENV === "production";
 const isHostedEnvironment = Boolean(
   process.env.RENDER || process.env.RENDER_EXTERNAL_HOSTNAME || process.env.RAILWAY_ENVIRONMENT,
 );
-const emailVerificationEnabled = data.NODE_ENV === "test" || Boolean(data.SMTP_HOST);
-
-if ((data.SMTP_USER && !data.SMTP_PASS) || (!data.SMTP_USER && data.SMTP_PASS)) {
-  throw new Error(
-    "Invalid environment configuration: SMTP_USER and SMTP_PASS must both be provided together.",
-  );
-}
 
 const allowedOrigins = new Set<string>([data.FRONTEND_ORIGIN, ...(data.CORS_ALLOWED_ORIGINS ?? [])]);
 
@@ -115,7 +101,6 @@ export const env = {
   ...data,
   isProduction,
   isHostedEnvironment,
-  emailVerificationEnabled,
   host: data.HOST ?? "0.0.0.0",
   trustProxy: data.TRUST_PROXY ?? (isProduction || isHostedEnvironment ? 1 : false),
   cookieDomain: data.COOKIE_DOMAIN ?? undefined,
@@ -123,5 +108,4 @@ export const env = {
   storageRoot: resolve(process.cwd(), data.DATA_STORAGE_DIR),
   maxUploadBytes: Math.round(data.MAX_UPLOAD_SIZE_MB * 1024 * 1024),
   authSessionTtlMs: Math.round(data.AUTH_SESSION_TTL_HOURS * 60 * 60 * 1000),
-  verifyTokenTtlMs: Math.round(data.VERIFY_TOKEN_TTL_HOURS * 60 * 60 * 1000),
 };

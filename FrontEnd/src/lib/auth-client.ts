@@ -308,13 +308,3 @@ export async function signOutFromSession() {
 
   return logoutResult.value;
 }
-
-export async function verifyEmailAddress(token: string) {
-  return request<{ message: string; user: SessionUser }>(
-    `/api/auth/verify?token=${encodeURIComponent(token)}`,
-    {
-      method: 'GET',
-      cache: 'no-store',
-    },
-  );
-}
