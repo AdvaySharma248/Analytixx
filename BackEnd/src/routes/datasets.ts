@@ -7,8 +7,8 @@ const router = Router();
 
 router.get(
   "/",
-  asyncHandler(async (_request, response) => {
-    response.json(await listDatasets());
+  asyncHandler(async (request, response) => {
+    response.json(await listDatasets(request.user!.id));
   }),
 );
 
@@ -21,7 +21,7 @@ router.delete(
       throw new AppError(400, "Dataset ID is required.", "DATASET_ID_REQUIRED");
     }
 
-    await deleteDataset(datasetId);
+    await deleteDataset(request.user!.id, datasetId);
     response.json({ success: true });
   }),
 );

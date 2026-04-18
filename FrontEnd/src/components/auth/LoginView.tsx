@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useCallback, useSyncExternalStore } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, ArrowUpRight, Bot, Loader2, BarChart3, Sparkles, TrendingUp, Zap, Moon, Sun, Eye, EyeOff } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import { signInWithEmail, signUpWithEmail } from '@/lib/auth-client';
 import { useAppStore } from '@/store/useAppStore';
 import RainEffect from './RainEffect';
 
@@ -23,11 +24,12 @@ const PREVIEW_STATS = [
 const PREVIEW_BARS = [38, 56, 49, 72, 68, 88, 95] as const;
 const QUERY_SPARKLINE = [28, 42, 36, 58, 51, 70, 82] as const;
 
-const TEST_USER = {
-  name: 'Test User',
-  email: 'testuser@gmail.com',
-  password: 'Test@1234',
-} as const;
+type AuthFeedback = {
+  type: 'success' | 'error';
+  message: string;
+  previewUrl?: string | null;
+  verificationUrl?: string | null;
+};
 
 // ─── Shared input component (with password toggle) ───
 function FormInput({
@@ -99,14 +101,50 @@ function FormInput({
   );
 }
 
+function FeedbackBanner({ feedback }: { feedback: AuthFeedback | null }) {
+  if (!feedback) {
+    return null;
+  }
+
+  const isSuccess = feedback.type === 'success';
+
+  return (
+    <div
+      className={`rounded-xl border px-3.5 py-3 text-[13px] leading-6 ${
+        isSuccess
+          ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-200'
+          : 'border-red-200 bg-red-50 text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-200'
+      }`}
+    >
+      <p>{feedback.message}</p>
+      {feedback.previewUrl && (
+        <a
+          href={feedback.previewUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-1 inline-block font-medium underline underline-offset-2"
+        >
+          Open preview email
+        </a>
+      )}
+      {!feedback.previewUrl && feedback.verificationUrl && (
+        <p className="mt-1 break-all text-[12px] opacity-80">
+          Dev verify link: {feedback.verificationUrl}
+        </p>
+      )}
+    </div>
+  );
+}
+
 // ─── Sign In form (front) ───
-function SignInForm({ onFlip, onSubmit, isLoading }: {
+function SignInForm({ onFlip, onSubmit, isLoading, feedback }: {
   onFlip: () => void;
   onSubmit: (email: string, password: string) => void;
   isLoading: boolean;
+  feedback: AuthFeedback | null;
 }) {
-  const [email, setEmail] = useState<string>(TEST_USER.email);
-  const [password, setPassword] = useState<string>(TEST_USER.password);
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
   const canSubmit = email.trim().length > 0 && password.trim().length > 0;
 
   const handleForm = (e: React.FormEvent) => {
@@ -120,6 +158,8 @@ function SignInForm({ onFlip, onSubmit, isLoading }: {
         <h2 className="text-[20px] font-bold text-[#374151] dark:text-gray-100">Welcome back</h2>
         <p className="text-[14px] text-[#9CA3AF] dark:text-gray-500 mt-1">Sign in to continue to Analytixx</p>
       </div>
+
+      <FeedbackBanner feedback={feedback} />
 
       <FormInput
         label="Email"
@@ -137,11 +177,6 @@ function SignInForm({ onFlip, onSubmit, isLoading }: {
         onChange={setPassword}
         autoComplete="current-password"
       />
-      <p className="text-[12px] text-[#9CA3AF] dark:text-gray-500">
-        Demo login: <span className="font-medium text-[#374151] dark:text-gray-300">{TEST_USER.email}</span>
-        {' / '}
-        <span className="font-medium text-[#374151] dark:text-gray-300">{TEST_USER.password}</span>
-      </p>
 
       <button
         type="submit"
@@ -175,10 +210,11 @@ function SignInForm({ onFlip, onSubmit, isLoading }: {
 }
 
 // ─── Sign Up form (back) ───
-function SignUpForm({ onFlip, onSubmit, isLoading }: {
+function SignUpForm({ onFlip, onSubmit, isLoading, feedback }: {
   onFlip: () => void;
   onSubmit: (name: string, email: string, password: string) => void;
   isLoading: boolean;
+  feedback: AuthFeedback | null;
 }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -196,6 +232,8 @@ function SignUpForm({ onFlip, onSubmit, isLoading }: {
         <h2 className="text-[20px] font-bold text-[#374151] dark:text-gray-100">Create account</h2>
         <p className="text-[14px] text-[#9CA3AF] dark:text-gray-500 mt-1">Get started with Analytixx for free</p>
       </div>
+
+      <FeedbackBanner feedback={feedback} />
 
       <FormInput
         label="Full name"
@@ -254,32 +292,81 @@ function SignUpForm({ onFlip, onSubmit, isLoading }: {
 
 // ─── Main Auth View ───
 export default function AuthView() {
-  const { setIsLoggedIn, setUserName, setUserEmail } = useAppStore();
+  const { setAuthenticatedUser } = useAppStore();
   const { theme, setTheme } = useTheme();
   const [isSignUp, setIsSignUp] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
+  const [mounted, setMounted] = useState(false);
+  const [feedback, setFeedback] = useState<AuthFeedback | null>(null);
+  const [signUpFormKey, setSignUpFormKey] = useState(0);
 
   const isDark = theme === 'dark';
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const handleSignIn = async (email: string, password: string) => {
     setIsLoading(true);
-    await new Promise((r) => setTimeout(r, 800));
-    const normalizedEmail = email.trim().toLowerCase();
-    const isTestUser = normalizedEmail === TEST_USER.email && password === TEST_USER.password;
+    setFeedback(null);
 
-    setIsLoggedIn(true);
-    setUserEmail(isTestUser ? TEST_USER.email : email);
-    setUserName(isTestUser ? TEST_USER.name : email.split('@')[0] || 'Demo User');
+    try {
+      const result = await signInWithEmail({ email, password });
+      setAuthenticatedUser({
+        id: result.user.id,
+        name: result.user.name,
+        email: result.user.email,
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message.toLowerCase().includes('verify')
+          ? 'Email not verified'
+          : error instanceof Error
+            ? error.message
+            : 'Sign in failed.';
+
+      setFeedback({
+        type: 'error',
+        message,
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleSignUp = async (name: string, email: string, _password: string) => {
+  const handleSignUp = async (name: string, email: string, password: string) => {
     setIsLoading(true);
-    await new Promise((r) => setTimeout(r, 800));
-    setIsLoggedIn(true);
-    setUserName(name);
-    setUserEmail(email);
+    setFeedback(null);
+
+    try {
+      const result = await signUpWithEmail({ name, email, password });
+      setFeedback({
+        type: 'success',
+        message: 'Verification email sent. Please check your inbox.',
+        previewUrl: result.previewUrl ?? null,
+        verificationUrl: result.verificationUrl ?? null,
+      });
+      setSignUpFormKey((value) => value + 1);
+      setIsSignUp(false);
+    } catch (error) {
+      setFeedback({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Sign up failed.',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const showSignUp = useCallback(() => {
+    setFeedback(null);
+    setIsSignUp(true);
+  }, []);
+
+  const showSignIn = useCallback(() => {
+    setFeedback(null);
+    setIsSignUp(false);
+  }, []);
 
   // Smooth theme toggle
   const toggleTheme = useCallback(() => {
@@ -288,6 +375,10 @@ export default function AuthView() {
     setTheme(theme === 'dark' ? 'light' : 'dark');
     setTimeout(() => root.classList.remove('transitioning'), 350);
   }, [theme, setTheme]);
+
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <div
@@ -682,7 +773,12 @@ export default function AuthView() {
                   }`}
                   style={{ gridArea: '1 / 1', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
                 >
-                  <SignInForm onFlip={() => setIsSignUp(true)} onSubmit={handleSignIn} isLoading={isLoading} />
+                  <SignInForm
+                    onFlip={showSignUp}
+                    onSubmit={handleSignIn}
+                    isLoading={isLoading}
+                    feedback={!isSignUp ? feedback : null}
+                  />
                 </div>
                 <div
                   className={`rounded-2xl p-6 ${isDark
@@ -691,7 +787,13 @@ export default function AuthView() {
                   }`}
                   style={{ gridArea: '1 / 1', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
                 >
-                  <SignUpForm onFlip={() => setIsSignUp(false)} onSubmit={handleSignUp} isLoading={isLoading} />
+                  <SignUpForm
+                    key={`mobile-signup-${signUpFormKey}`}
+                    onFlip={showSignIn}
+                    onSubmit={handleSignUp}
+                    isLoading={isLoading}
+                    feedback={isSignUp ? feedback : null}
+                  />
                 </div>
               </motion.div>
             </div>
@@ -740,9 +842,10 @@ export default function AuthView() {
                 }}
               >
                 <SignInForm
-                  onFlip={() => setIsSignUp(true)}
+                  onFlip={showSignUp}
                   onSubmit={handleSignIn}
                   isLoading={isLoading}
+                  feedback={!isSignUp ? feedback : null}
                 />
               </div>
 
@@ -763,9 +866,11 @@ export default function AuthView() {
                 }}
               >
                 <SignUpForm
-                  onFlip={() => setIsSignUp(false)}
+                  key={`desktop-signup-${signUpFormKey}`}
+                  onFlip={showSignIn}
                   onSubmit={handleSignUp}
                   isLoading={isLoading}
+                  feedback={isSignUp ? feedback : null}
                 />
               </div>
             </motion.div>
@@ -780,5 +885,3 @@ export default function AuthView() {
     </div>
   );
 }
-
-

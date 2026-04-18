@@ -51,6 +51,7 @@ export default function UploadSection() {
 
       const res = await fetch('/api/upload', {
         method: 'POST',
+        credentials: 'include',
         body: formData,
       });
 

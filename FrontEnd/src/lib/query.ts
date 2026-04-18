@@ -14,6 +14,7 @@ export interface QueryResponse {
 export async function runDatasetQuery(datasetId: string, question: string): Promise<QueryResponse> {
   const response = await fetch('/api/query', {
     method: 'POST',
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       datasetId,

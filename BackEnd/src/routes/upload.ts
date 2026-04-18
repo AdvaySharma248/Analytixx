@@ -33,7 +33,7 @@ router.post(
       throw new AppError(400, "Empty file provided.", "EMPTY_FILE");
     }
 
-    const dataset = await ingestDataset(request.file);
+    const dataset = await ingestDataset(request.user!.id, request.file);
     response.status(201).json(dataset);
   }),
 );

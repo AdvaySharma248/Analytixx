@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Geist_Mono } from "next/font/google";
+import Script from "next/script";
+import FirebaseAnalytics from "@/components/firebase/FirebaseAnalytics";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
@@ -64,12 +66,50 @@ export default function RootLayout({
         suppressHydrationWarning
         className="font-sans antialiased bg-background text-foreground"
       >
+        <Script id="strip-extension-attrs" strategy="beforeInteractive">
+          {`
+            (() => {
+              const strip = (root) => {
+                if (!root || typeof root.querySelectorAll !== 'function') return;
+                root.querySelectorAll('[bis_skin_checked]').forEach((node) => {
+                  node.removeAttribute('bis_skin_checked');
+                });
+              };
+
+              strip(document);
+
+              const observer = new MutationObserver((mutations) => {
+                for (const mutation of mutations) {
+                  if (mutation.type === 'attributes' && mutation.attributeName === 'bis_skin_checked') {
+                    mutation.target.removeAttribute('bis_skin_checked');
+                  }
+
+                  mutation.addedNodes.forEach((node) => {
+                    if (!(node instanceof Element)) return;
+                    if (node.hasAttribute('bis_skin_checked')) {
+                      node.removeAttribute('bis_skin_checked');
+                    }
+                    strip(node);
+                  });
+                }
+              });
+
+              observer.observe(document.documentElement, {
+                subtree: true,
+                childList: true,
+                attributes: true,
+                attributeFilter: ['bis_skin_checked'],
+              });
+            })();
+          `}
+        </Script>
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
           enableSystem={false}
           storageKey="dataai-theme"
         >
+          <FirebaseAnalytics />
           {children}
           <Toaster />
         </ThemeProvider>

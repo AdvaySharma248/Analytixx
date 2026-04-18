@@ -7,8 +7,8 @@ const router = Router();
 
 router.get(
   "/",
-  asyncHandler(async (_request, response) => {
-    response.json(await listQueryHistory());
+  asyncHandler(async (request, response) => {
+    response.json(await listQueryHistory(request.user!.id));
   }),
 );
 

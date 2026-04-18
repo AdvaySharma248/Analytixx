@@ -9,10 +9,13 @@ interface AppState {
   // Auth
   isLoggedIn: boolean;
   setIsLoggedIn: (v: boolean) => void;
+  setAuthenticatedUser: (user: { id: string; name: string; email: string }) => void;
 
   // User
+  userId: string;
   userName: string;
   userEmail: string;
+  setUserId: (v: string) => void;
   setUserName: (v: string) => void;
   setUserEmail: (v: string) => void;
 
@@ -63,6 +66,7 @@ interface AppState {
 
 const initialState = {
   isLoggedIn: false,
+  userId: '',
   userName: '',
   userEmail: '',
   currentView: 'dashboard' as CurrentView,
@@ -84,7 +88,15 @@ export const useAppStore = create<AppState>((set) => ({
   ...initialState,
 
   setIsLoggedIn: (v) => set({ isLoggedIn: v }),
+  setAuthenticatedUser: (user) => set({
+    ...initialState,
+    isLoggedIn: true,
+    userId: user.id,
+    userName: user.name,
+    userEmail: user.email,
+  }),
 
+  setUserId: (v) => set({ userId: v }),
   setUserName: (v) => set({ userName: v }),
   setUserEmail: (v) => set({ userEmail: v }),
 

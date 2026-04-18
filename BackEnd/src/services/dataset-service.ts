@@ -329,7 +329,7 @@ function serializeDataset(dataset: Dataset) {
   };
 }
 
-export async function ingestDataset(file: Express.Multer.File) {
+export async function ingestDataset(userId: string, file: Express.Multer.File) {
   const datasetId = randomUUID();
 
   try {
@@ -345,6 +345,7 @@ export async function ingestDataset(file: Express.Multer.File) {
     const dataset = await db.dataset.create({
       data: {
         id: datasetId,
+        ownerId: userId,
         filename: file.originalname,
         rowCount: profiled.rowCount,
         columnCount: profiled.columnCount,
@@ -366,17 +367,21 @@ export async function ingestDataset(file: Express.Multer.File) {
   }
 }
 
-export async function listDatasets() {
+export async function listDatasets(userId: string) {
   const datasets = await db.dataset.findMany({
+    where: { ownerId: userId },
     orderBy: { createdAt: "desc" },
   });
 
   return datasets.map(serializeDataset);
 }
 
-export async function getDatasetRecordOrThrow(datasetId: string) {
-  const dataset = await db.dataset.findUnique({
-    where: { id: datasetId },
+export async function getDatasetRecordOrThrow(userId: string, datasetId: string) {
+  const dataset = await db.dataset.findFirst({
+    where: {
+      id: datasetId,
+      ownerId: userId,
+    },
   });
 
   if (!dataset) {
@@ -386,8 +391,8 @@ export async function getDatasetRecordOrThrow(datasetId: string) {
   return dataset;
 }
 
-export async function getDatasetMetadata(datasetId: string) {
-  const dataset = await getDatasetRecordOrThrow(datasetId);
+export async function getDatasetMetadata(userId: string, datasetId: string) {
+  const dataset = await getDatasetRecordOrThrow(userId, datasetId);
   const base = serializeDataset(dataset);
 
   if (!dataset.profilePath || !dataset.normalizedFilePath) {
@@ -414,8 +419,8 @@ export async function getDatasetMetadata(datasetId: string) {
   };
 }
 
-export async function getDatasetRowsAndProfile(datasetId: string) {
-  const dataset = await getDatasetRecordOrThrow(datasetId);
+export async function getDatasetRowsAndProfile(userId: string, datasetId: string) {
+  const dataset = await getDatasetRecordOrThrow(userId, datasetId);
 
   if (!dataset.normalizedFilePath || !dataset.profilePath) {
     throw new AppError(
@@ -435,8 +440,8 @@ export async function getDatasetRowsAndProfile(datasetId: string) {
   return { dataset, rows, profile };
 }
 
-export async function deleteDataset(datasetId: string) {
-  const dataset = await getDatasetRecordOrThrow(datasetId);
+export async function deleteDataset(userId: string, datasetId: string) {
+  const dataset = await getDatasetRecordOrThrow(userId, datasetId);
 
   await Promise.all([
     db.dataset.delete({ where: { id: datasetId } }),
@@ -444,8 +449,9 @@ export async function deleteDataset(datasetId: string) {
   ]);
 }
 
-export async function listQueryHistory() {
+export async function listQueryHistory(userId: string) {
   const queries = await db.query.findMany({
+    where: { userId },
     orderBy: { createdAt: "desc" },
     take: 50,
   });

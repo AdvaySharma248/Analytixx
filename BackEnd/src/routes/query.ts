@@ -20,7 +20,7 @@ router.post(
       throw new AppError(400, "Dataset ID and question are required.", "INVALID_QUERY_BODY");
     }
 
-    const result = await runQuery(parsed.data.datasetId, parsed.data.question);
+    const result = await runQuery(request.user!.id, parsed.data.datasetId, parsed.data.question);
     response.json(result);
   }),
 );

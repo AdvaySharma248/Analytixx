@@ -14,7 +14,7 @@ router.get(
       throw new AppError(400, "datasetId is required.", "DATASET_ID_REQUIRED");
     }
 
-    response.json(await getDatasetMetadata(datasetId));
+    response.json(await getDatasetMetadata(request.user!.id, datasetId));
   }),
 );
 

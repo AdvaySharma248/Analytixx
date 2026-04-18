@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Table2, Upload, Search, BarChart3, Clock, Sparkles } from 'lucide-react';
+import { toast } from 'sonner';
+import { fetchCurrentSession } from '@/lib/auth-client';
 import { useAppStore } from '@/store/useAppStore';
 import TopNav from '@/components/layout/TopNav';
 import LoginView from '@/components/auth/LoginView';
@@ -101,6 +103,7 @@ function DashboardView() {
     setDatasets,
     setQueryHistory,
     setActiveDataset,
+    reset,
   } = useAppStore();
 
   // Fetch initial data on mount
@@ -108,15 +111,29 @@ function DashboardView() {
     async function loadData() {
       try {
         const [datasetsRes, historyRes] = await Promise.all([
-          fetch('/api/datasets'),
-          fetch('/api/history'),
+          fetch('/api/datasets', {
+            credentials: 'include',
+            cache: 'no-store',
+          }),
+          fetch('/api/history', {
+            credentials: 'include',
+            cache: 'no-store',
+          }),
         ]);
+
+        if (datasetsRes.status === 401 || historyRes.status === 401) {
+          reset();
+          toast.error('Your session expired. Please sign in again.');
+          return;
+        }
 
         if (datasetsRes.ok) {
           const ds = await datasetsRes.json();
           setDatasets(ds);
           if (ds.length > 0) {
             setActiveDataset(ds[0]);
+          } else {
+            setActiveDataset(null);
           }
         }
 
@@ -124,12 +141,12 @@ function DashboardView() {
           const history = await historyRes.json();
           setQueryHistory(history);
         }
-      } catch (err) {
-        console.error('Failed to load data:', err);
+      } catch {
+        toast.error('Failed to load your workspace.');
       }
     }
-    loadData();
-  }, [setDatasets, setQueryHistory, setActiveDataset]);
+    void loadData();
+  }, [reset, setDatasets, setQueryHistory, setActiveDataset]);
 
   return (
     <>
@@ -195,7 +212,71 @@ function DashboardView() {
 }
 
 export default function DashboardPage() {
-  const { isLoggedIn, currentView } = useAppStore();
+  const [mounted, setMounted] = useState(false);
+  const [isSessionLoading, setIsSessionLoading] = useState(true);
+  const { isLoggedIn, currentView, setAuthenticatedUser, reset } = useAppStore();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) {
+      return;
+    }
+
+    let isActive = true;
+
+    async function hydrateSession() {
+      try {
+        const user = await fetchCurrentSession();
+        if (!isActive) {
+          return;
+        }
+
+        if (user) {
+          setAuthenticatedUser({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+          });
+        } else {
+          reset();
+        }
+      } catch {
+        if (isActive) {
+          reset();
+        }
+      } finally {
+        if (isActive) {
+          setIsSessionLoading(false);
+        }
+      }
+    }
+
+    void hydrateSession();
+
+    return () => {
+      isActive = false;
+    };
+  }, [mounted, reset, setAuthenticatedUser]);
+
+  if (!mounted) {
+    return null;
+  }
+
+  if (isSessionLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#F7F8FA] text-[#374151] dark:bg-[#0d0d14] dark:text-gray-100">
+        <div className="text-center">
+          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-[#6B7280] dark:text-gray-500">
+            Secure Session
+          </p>
+          <h1 className="mt-3 text-[22px] font-bold">Loading your workspace</h1>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <AnimatePresence mode="wait">

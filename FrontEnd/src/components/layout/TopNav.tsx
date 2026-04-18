@@ -1,22 +1,23 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useCallback, useSyncExternalStore } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { LogOut, User, Moon, Sun, ChevronDown } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
+import { signOutFromSession } from '@/lib/auth-client';
 import { useAppStore } from '@/store/useAppStore';
 
 export default function TopNav() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { theme, setTheme } = useTheme();
-  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
   const {
     setActiveDataset,
     isLoggedIn,
-    setIsLoggedIn,
     setCurrentView,
     reset,
     userName,
@@ -37,15 +38,23 @@ export default function TopNav() {
 
   const handleLogout = useCallback(() => {
     setDropdownOpen(false);
-    toast.success('Signed out', {
-      description: 'See you next time!',
-      duration: 2000,
-    });
-    setTimeout(() => {
-      setIsLoggedIn(false);
-      reset();
-    }, 800);
-  }, [setIsLoggedIn, reset]);
+    setIsSigningOut(true);
+
+    void signOutFromSession()
+      .then(() => {
+        reset();
+        toast.success('Signed out', {
+          description: 'See you next time!',
+          duration: 2000,
+        });
+      })
+      .catch((error) => {
+        toast.error(error instanceof Error ? error.message : 'Failed to sign out.');
+      })
+      .finally(() => {
+        setIsSigningOut(false);
+      });
+  }, [reset]);
 
   const toggleTheme = useCallback(() => {
     const root = document.documentElement;
@@ -58,6 +67,10 @@ export default function TopNav() {
       root.classList.remove('transitioning');
     }, 350);
   }, [theme, setTheme]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -214,10 +227,11 @@ export default function TopNav() {
                   <div className="border-t border-[#F3F4F5] py-1 dark:border-white/[0.06]">
                     <button
                       onClick={handleLogout}
+                      disabled={isSigningOut}
                       className="flex w-full items-center gap-2.5 px-4 py-2.5 text-[13px] font-medium text-[#DC2626] hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
                     >
                       <LogOut className="h-4 w-4" />
-                      <span>Sign Out</span>
+                      <span>{isSigningOut ? 'Signing Out...' : 'Sign Out'}</span>
                     </button>
                   </div>
                 </motion.div>

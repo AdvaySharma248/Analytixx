@@ -628,26 +628,28 @@ function buildAnalystInsight(question: string, result: AnalysisResult): InsightP
   };
 }
 
-export async function runQuery(datasetId: string, question: string) {
-  try {
-    const { dataset, rows, profile } = await getDatasetRowsAndProfile(datasetId);
-    let rawPlan = await generateQueryPlan({
-      question,
-      profile,
-      previewRows: profile.previewRows,
-    });
-    
-    // UNKNOWN QUERY HANDLING & DYNAMIC VALIDATION
-    if (typeof rawPlan !== "object" || !rawPlan.operation || !rawPlan.metric) {
-      if (rawPlan.operation !== "count") {
-        throw new Error("Unable to understand query");
-      }
-    }
+export async function runQuery(userId: string, datasetId: string, question: string) {
+  const { rows, profile } = await getDatasetRowsAndProfile(userId, datasetId);
+  const rawPlan = await generateQueryPlan({
+    question,
+    profile,
+    previewRows: profile.previewRows,
+  });
 
-    const resolvedPlan = sanitizePlan(rawPlan, profile);
-    const analysis = executePlan(rows, profile, resolvedPlan);
-    const insightCopy = buildAnalystInsight(question, analysis);
+  if (typeof rawPlan !== "object" || rawPlan === null || !("operation" in rawPlan)) {
+    throw new AppError(400, "Unable to understand query.", "QUERY_PLAN_INVALID");
+  }
 
+  if (
+    rawPlan.operation !== "count" &&
+    !("metric" in rawPlan)
+  ) {
+    throw new AppError(400, "Unable to understand query.", "QUERY_PLAN_INVALID");
+  }
+
+  const resolvedPlan = sanitizePlan(rawPlan, profile);
+  const analysis = executePlan(rows, profile, resolvedPlan);
+  const insightCopy = buildAnalystInsight(question, analysis);
   const insightId = randomUUID();
   const queryId = randomUUID();
   const createdAt = new Date().toISOString();
@@ -656,6 +658,7 @@ export async function runQuery(datasetId: string, question: string) {
     db.insight.create({
       data: {
         id: insightId,
+        userId,
         datasetId,
         query: question,
         title: insightCopy.title,
@@ -667,6 +670,7 @@ export async function runQuery(datasetId: string, question: string) {
     db.query.create({
       data: {
         id: queryId,
+        userId,
         datasetId,
         question,
         response: insightCopy.summary,
@@ -693,18 +697,5 @@ export async function runQuery(datasetId: string, question: string) {
       },
       createdAt,
     };
-  } catch (err: any) {
-    if (err instanceof AppError && err.code === "EMPTY_QUERY_RESULT") {
-      return {
-        message: "No data available for this query",
-        chart: null
-      };
-    }
-    
-    return {
-      error: err instanceof Error ? err.message : "Unknown error",
-      chart: null
-    };
-  }
 }
 
