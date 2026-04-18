@@ -2,13 +2,31 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 
 import { verifyEmailAddress } from '@/lib/auth-client';
 
 type VerifyState = 'loading' | 'success' | 'error';
 
-export default function VerifyPage() {
+function VerifyPageFallback() {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-[#F7F8FA] px-6 py-12 dark:bg-[#0d0d14]">
+      <div className="w-full max-w-md rounded-3xl border border-[#ECEDEE] bg-white p-8 shadow-[0_12px_40px_rgba(17,24,39,0.08)] dark:border-white/[0.08] dark:bg-[#161623] dark:shadow-[0_16px_48px_rgba(0,0,0,0.35)]">
+        <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-[#6B7280] dark:text-gray-500">
+          Email Verification
+        </p>
+        <h1 className="mt-3 text-[28px] font-bold text-[#111827] dark:text-gray-100">
+          Checking your link
+        </h1>
+        <p className="mt-4 text-[14px] leading-7 text-[#4B5563] dark:text-gray-300">
+          Verifying your email...
+        </p>
+      </div>
+    </main>
+  );
+}
+
+function VerifyPageContent() {
   const searchParams = useSearchParams();
   const [mounted, setMounted] = useState(false);
   const [status, setStatus] = useState<VerifyState>('loading');
@@ -102,5 +120,13 @@ export default function VerifyPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function VerifyPage() {
+  return (
+    <Suspense fallback={<VerifyPageFallback />}>
+      <VerifyPageContent />
+    </Suspense>
   );
 }

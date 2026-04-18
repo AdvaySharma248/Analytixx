@@ -68,11 +68,44 @@ export function getSessionTokenFromRequest(request: Request) {
 
 export function createSessionCookie(token: string) {
   const maxAgeSeconds = Math.floor(env.authSessionTtlMs / 1000);
-  const secureFlag = env.NODE_ENV === "production" ? "; Secure" : "";
-  return `${env.AUTH_SESSION_COOKIE_NAME}=${encodeCookieValue(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAgeSeconds}${secureFlag}`;
+  const parts = [
+    `${env.AUTH_SESSION_COOKIE_NAME}=${encodeCookieValue(token)}`,
+    "Path=/",
+    "HttpOnly",
+    "SameSite=Lax",
+    `Max-Age=${maxAgeSeconds}`,
+    "Priority=High",
+  ];
+
+  if (env.cookieDomain) {
+    parts.push(`Domain=${env.cookieDomain}`);
+  }
+
+  if (env.isProduction) {
+    parts.push("Secure");
+  }
+
+  return parts.join("; ");
 }
 
 export function createClearedSessionCookie() {
-  const secureFlag = env.NODE_ENV === "production" ? "; Secure" : "";
-  return `${env.AUTH_SESSION_COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secureFlag}`;
+  const parts = [
+    `${env.AUTH_SESSION_COOKIE_NAME}=`,
+    "Path=/",
+    "HttpOnly",
+    "SameSite=Lax",
+    "Max-Age=0",
+    "Expires=Thu, 01 Jan 1970 00:00:00 GMT",
+    "Priority=High",
+  ];
+
+  if (env.cookieDomain) {
+    parts.push(`Domain=${env.cookieDomain}`);
+  }
+
+  if (env.isProduction) {
+    parts.push("Secure");
+  }
+
+  return parts.join("; ");
 }

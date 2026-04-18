@@ -1,6 +1,7 @@
 import nodemailer from "nodemailer";
 
 import { env } from "../config/env.js";
+import { AppError } from "../lib/errors.js";
 
 type MailTransport = {
   mode: "smtp" | "ethereal" | "json";
@@ -10,6 +11,14 @@ type MailTransport = {
 let transportPromise: Promise<MailTransport> | null = null;
 
 async function createMailTransport(): Promise<MailTransport> {
+  if (env.isProduction && !env.SMTP_HOST) {
+    throw new AppError(
+      503,
+      "Email delivery is not configured for production. Set SMTP_HOST and related credentials.",
+      "EMAIL_NOT_CONFIGURED",
+    );
+  }
+
   if (env.SMTP_HOST) {
     return {
       mode: "smtp",

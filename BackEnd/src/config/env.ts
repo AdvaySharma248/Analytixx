@@ -16,13 +16,55 @@ const optionalString = z.preprocess((value) => {
   return trimmed.length > 0 ? trimmed : undefined;
 }, z.string().trim().min(1).optional());
 
+const originList = z.preprocess((value) => {
+  if (typeof value !== "string") {
+    return value;
+  }
+
+  const origins = value
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+
+  return origins.length > 0 ? origins : undefined;
+}, z.array(z.string().url()).optional());
+
+const trustProxySetting = z.preprocess((value) => {
+  if (typeof value !== "string") {
+    return value;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  if (trimmed === "true") {
+    return true;
+  }
+
+  if (trimmed === "false") {
+    return false;
+  }
+
+  if (/^\d+$/.test(trimmed)) {
+    return Number(trimmed);
+  }
+
+  return trimmed;
+}, z.union([z.boolean(), z.number().int().nonnegative(), z.string().trim().min(1)]).optional());
+
 const envSchema = z.object({
   NODE_ENV: z.string().default("development"),
+  HOST: optionalString,
   PORT: z.coerce.number().int().positive().default(4000),
   DATABASE_URL: z.string().min(1),
   GEMINI_API_KEY: z.string().trim().min(1).optional(),
   GEMINI_MODEL: z.string().trim().min(1).default("gemini-2.5-flash"),
   FRONTEND_ORIGIN: z.string().url().default("http://127.0.0.1:3000"),
+  CORS_ALLOWED_ORIGINS: originList,
+  COOKIE_DOMAIN: optionalString,
+  TRUST_PROXY: trustProxySetting,
   EMAIL_FROM: z.string().trim().min(1).default("Analytixx <no-reply@analytixx.local>"),
   SMTP_HOST: optionalString,
   SMTP_PORT: z.coerce.number().int().positive().default(587),
@@ -50,10 +92,28 @@ if (!parsed.success) {
 }
 
 const data = parsed.data;
+const isProduction = data.NODE_ENV === "production";
+
+if ((data.SMTP_USER && !data.SMTP_PASS) || (!data.SMTP_USER && data.SMTP_PASS)) {
+  throw new Error(
+    "Invalid environment configuration: SMTP_USER and SMTP_PASS must both be provided together.",
+  );
+}
+
+const allowedOrigins = new Set<string>([data.FRONTEND_ORIGIN, ...(data.CORS_ALLOWED_ORIGINS ?? [])]);
+
+if (!isProduction) {
+  allowedOrigins.add("http://127.0.0.1:3000");
+  allowedOrigins.add("http://localhost:3000");
+}
 
 export const env = {
   ...data,
-  host: "127.0.0.1",
+  isProduction,
+  host: data.HOST ?? (isProduction ? "0.0.0.0" : "127.0.0.1"),
+  trustProxy: data.TRUST_PROXY ?? (isProduction ? 1 : false),
+  cookieDomain: data.COOKIE_DOMAIN ?? undefined,
+  allowedOrigins: Array.from(allowedOrigins),
   storageRoot: resolve(process.cwd(), data.DATA_STORAGE_DIR),
   maxUploadBytes: Math.round(data.MAX_UPLOAD_SIZE_MB * 1024 * 1024),
   authSessionTtlMs: Math.round(data.AUTH_SESSION_TTL_HOURS * 60 * 60 * 1000),
