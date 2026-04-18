@@ -2,6 +2,7 @@
 
 import {
   createUserWithEmailAndPassword,
+  deleteUser,
   getIdToken,
   reload,
   sendEmailVerification,
@@ -123,6 +124,70 @@ function isUnauthorizedContinueUrlError(error: unknown) {
   return code === "auth/unauthorized-continue-uri" || code === "auth/invalid-continue-uri";
 }
 
+async function sendFirebaseVerificationEmail(user: Parameters<typeof sendEmailVerification>[0]) {
+  try {
+    await sendEmailVerification(user, {
+      url: getFirebaseActionUrl(),
+    });
+  } catch (error) {
+    if (!isUnauthorizedContinueUrlError(error)) {
+      throw error;
+    }
+
+    // Fallback to Firebase's default verification handler when the current
+    // domain has not been added to Authorized domains in Firebase Auth yet.
+    await sendEmailVerification(user);
+  }
+}
+
+async function rollbackNewFirebaseUser(user: Parameters<typeof deleteUser>[0]) {
+  try {
+    await deleteUser(user);
+  } catch {
+    // If cleanup fails, surface the original signup error instead of masking it.
+  }
+}
+
+async function resendVerificationForExistingAccount(input: {
+  email: string;
+  password: string;
+}) {
+  const auth = requireFirebaseAuth();
+
+  try {
+    const credential = await signInWithEmailAndPassword(auth, input.email.trim(), input.password);
+    await reload(credential.user);
+
+    if (credential.user.emailVerified) {
+      throw new Error("This email is already registered and already verified. Please sign in instead.");
+    }
+
+    await sendFirebaseVerificationEmail(credential.user);
+
+    return {
+      message: "This email is already registered but not verified. We've sent a fresh verification email.",
+      previewUrl: null,
+      verificationUrl: null,
+    };
+  } catch (error) {
+    const code = getErrorCode(error);
+
+    if (
+      code === "auth/wrong-password"
+      || code === "auth/invalid-credential"
+      || code === "auth/user-not-found"
+    ) {
+      throw new Error(
+        "This email is already registered. Sign in with the same password to resend the verification email.",
+      );
+    }
+
+    throw error;
+  } finally {
+    await signOutFromFirebase(auth).catch(() => undefined);
+  }
+}
+
 async function createBackendSessionFromFirebaseIdToken(idToken: string) {
   return request<{ message: string; user: SessionUser }>("/api/auth/firebase/session", {
     method: "POST",
@@ -145,40 +210,43 @@ export async function signUpWithEmail(input: {
   password: string;
 }) {
   const auth = requireFirebaseAuth();
+  const trimmedName = input.name.trim();
+  const trimmedEmail = input.email.trim();
 
   try {
-    const credential = await createUserWithEmailAndPassword(
-      auth,
-      input.email.trim(),
-      input.password,
-    );
-
-    if (input.name.trim().length > 0) {
-      await updateProfile(credential.user, {
-        displayName: input.name.trim(),
-      });
-    }
-
     try {
-      await sendEmailVerification(credential.user, {
-        url: getFirebaseActionUrl(),
-      });
-    } catch (error) {
-      if (!isUnauthorizedContinueUrlError(error)) {
+      const credential = await createUserWithEmailAndPassword(auth, trimmedEmail, input.password);
+
+      try {
+        if (trimmedName.length > 0) {
+          await updateProfile(credential.user, {
+            displayName: trimmedName,
+          });
+        }
+
+        await sendFirebaseVerificationEmail(credential.user);
+      } catch (error) {
+        await rollbackNewFirebaseUser(credential.user);
         throw error;
       }
 
-      // Fallback to Firebase's default verification handler when the current
-      // domain has not been added to Authorized domains in Firebase Auth yet.
-      await sendEmailVerification(credential.user);
-    }
-    await signOutFromFirebase(auth);
+      await signOutFromFirebase(auth).catch(() => undefined);
 
-    return {
-      message: "Verification email sent. Please check your inbox.",
-      previewUrl: null,
-      verificationUrl: null,
-    };
+      return {
+        message: "Verification email sent. Please check your inbox.",
+        previewUrl: null,
+        verificationUrl: null,
+      };
+    } catch (error) {
+      if (getErrorCode(error) === "auth/email-already-in-use") {
+        return await resendVerificationForExistingAccount({
+          email: trimmedEmail,
+          password: input.password,
+        });
+      }
+
+      throw error;
+    }
   } catch (error) {
     throw new Error(toAuthErrorMessage(error, "Sign up failed."));
   }
@@ -196,8 +264,20 @@ export async function signInWithEmail(input: { email: string; password: string }
     await reload(credential.user);
 
     if (!credential.user.emailVerified) {
-      await signOutFromFirebase(auth);
-      throw new Error("Please verify your email first.");
+      try {
+        await sendFirebaseVerificationEmail(credential.user);
+        throw new Error("Your email is not verified yet. We've sent a fresh verification email.");
+      } catch (error) {
+        if (error instanceof Error && error.message.includes("fresh verification email")) {
+          throw error;
+        }
+
+        throw new Error(
+          "Your email is not verified yet, and we couldn't resend the verification email. Please try again in a moment.",
+        );
+      } finally {
+        await signOutFromFirebase(auth).catch(() => undefined);
+      }
     }
 
     const idToken = await getIdToken(credential.user, true);

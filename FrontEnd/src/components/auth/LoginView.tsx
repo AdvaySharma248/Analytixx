@@ -325,15 +325,11 @@ export default function AuthView() {
         email: result.user.email,
       });
     } catch (error) {
-      const message =
-        error instanceof Error && error.message.toLowerCase().includes('verify')
-          ? 'Email not verified'
-          : error instanceof Error
-            ? error.message
-            : 'Sign in failed.';
+      const message = error instanceof Error ? error.message : 'Sign in failed.';
+      const isVerificationRecovery = /fresh verification email/i.test(message);
 
       setFeedback({
-        type: 'error',
+        type: isVerificationRecovery ? 'success' : 'error',
         message,
       });
     } finally {
