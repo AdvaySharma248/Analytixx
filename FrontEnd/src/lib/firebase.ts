@@ -1,42 +1,38 @@
 import { getApp, getApps, initializeApp } from "firebase/app";
 import { getAnalytics, isSupported, type Analytics } from "firebase/analytics";
 
-const defaultFirebaseConfig = {
-  apiKey: "AIzaSyB8z4Jho9mqFy3xszDpCjQIObtPT-DugT4",
-  authDomain: "analytixx-1.firebaseapp.com",
-  projectId: "analytixx-1",
-  storageBucket: "analytixx-1.firebasestorage.app",
-  messagingSenderId: "264021224506",
-  appId: "1:264021224506:web:4f3407478901fa5ce5d903",
-  measurementId: "G-9REEPPEKRW",
-} as const;
-
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ?? defaultFirebaseConfig.apiKey,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ?? defaultFirebaseConfig.authDomain,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? defaultFirebaseConfig.projectId,
-  storageBucket:
-    process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ?? defaultFirebaseConfig.storageBucket,
-  messagingSenderId:
-    process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
-    ?? defaultFirebaseConfig.messagingSenderId,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID ?? defaultFirebaseConfig.appId,
-  measurementId:
-    process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID ?? defaultFirebaseConfig.measurementId,
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY?.trim() ?? "",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN?.trim() ?? "",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID?.trim() ?? "",
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET?.trim() ?? "",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID?.trim() ?? "",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID?.trim() ?? "",
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID?.trim(),
 };
 
-const requiredFirebaseConfig = [
-  firebaseConfig.apiKey,
-  firebaseConfig.authDomain,
-  firebaseConfig.projectId,
-  firebaseConfig.storageBucket,
-  firebaseConfig.messagingSenderId,
-  firebaseConfig.appId,
-];
+const requiredFirebaseConfigEntries = [
+  ["NEXT_PUBLIC_FIREBASE_API_KEY", firebaseConfig.apiKey],
+  ["NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN", firebaseConfig.authDomain],
+  ["NEXT_PUBLIC_FIREBASE_PROJECT_ID", firebaseConfig.projectId],
+  ["NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET", firebaseConfig.storageBucket],
+  ["NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID", firebaseConfig.messagingSenderId],
+  ["NEXT_PUBLIC_FIREBASE_APP_ID", firebaseConfig.appId],
+] as const;
 
-export const isFirebaseConfigured = requiredFirebaseConfig.every(
-  (value) => typeof value === "string" && value.length > 0,
-);
+export const missingFirebaseConfigKeys = requiredFirebaseConfigEntries
+  .filter(([, value]) => value.length === 0)
+  .map(([key]) => key);
+
+export const isFirebaseConfigured = missingFirebaseConfigKeys.length === 0;
+
+export function getFirebaseConfigurationErrorMessage() {
+  if (isFirebaseConfigured) {
+    return null;
+  }
+
+  return `Firebase authentication is not configured in this app. Missing: ${missingFirebaseConfigKeys.join(", ")}.`;
+}
 
 export const firebaseApp = isFirebaseConfigured
   ? getApps().length > 0

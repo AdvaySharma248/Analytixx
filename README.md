@@ -6,7 +6,7 @@
 
 - Set `NODE_ENV=production`.
 - Set `FRONTEND_ORIGIN` to the deployed frontend URL.
-- Configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, and `SMTP_PASS` for email verification. Production signup now fails closed if SMTP is not configured.
+- Set `FIREBASE_PROJECT_ID` to the same Firebase project used by the frontend so the backend can verify Firebase ID tokens correctly.
 - Set `TRUST_PROXY=1` when running behind Render, Caddy, or another reverse proxy.
 - Set `COOKIE_DOMAIN` only if you want the auth cookie shared across subdomains.
 - Use `CORS_ALLOWED_ORIGINS` for any extra allowed origins beyond `FRONTEND_ORIGIN`.
@@ -17,6 +17,8 @@
 
 - Set `BACKEND_ORIGIN` to the deployed backend URL so Next.js rewrites proxy `/api/*` correctly.
 - Set all required `NEXT_PUBLIC_FIREBASE_*` values in the hosting platform.
+- Make sure every `NEXT_PUBLIC_FIREBASE_*` value comes from the same Firebase project, and that the project matches the backend `FIREBASE_PROJECT_ID`.
+- Add your deployed frontend domain to Firebase Authentication -> Settings -> Authorized domains before testing email verification links.
 
 ### Deploy notes
 

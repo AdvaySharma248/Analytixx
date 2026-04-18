@@ -5,6 +5,7 @@ import { applyActionCode, reload } from 'firebase/auth';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 
+import { getFirebaseConfigurationErrorMessage } from '@/lib/firebase';
 import { getFirebaseAuthClient } from '@/lib/firebase-auth';
 
 type VerifyState = 'loading' | 'success' | 'error';
@@ -54,7 +55,9 @@ function VerifyPageContent() {
           const auth = getFirebaseAuthClient();
 
           if (!auth) {
-            throw new Error('Firebase authentication is not configured in this app.');
+            throw new Error(
+              getFirebaseConfigurationErrorMessage() ?? 'Firebase authentication is not configured in this app.',
+            );
           }
 
           await applyActionCode(auth, oobCode);
@@ -73,13 +76,9 @@ function VerifyPageContent() {
         }
 
         if (source === 'firebase') {
-          if (!active) {
-            return;
-          }
-
-          setStatus('success');
-          setMessage('Email verified successfully. You can now sign in.');
-          return;
+          throw new Error(
+            'This verification link is incomplete or expired. Please open the latest email verification link that Firebase sent you.',
+          );
         }
 
         throw new Error('Firebase verification link is missing or invalid.');
