@@ -12,8 +12,18 @@ const upload = multer({
   dest: getTempUploadsRoot(),
   limits: { fileSize: env.maxUploadBytes },
   fileFilter: (_request, file, callback) => {
-    // Phase 1 Security: Validate MIME type (text/csv only). Do NOT trust file extension.
-    if (file.mimetype !== "text/csv") {
+    const validCsvMimeTypes = [
+      "text/csv",
+      "application/vnd.ms-excel",
+      "application/csv",
+      "text/x-csv",
+      "application/x-csv",
+      "text/comma-separated-values",
+      "text/x-comma-separated-values"
+    ];
+
+    // Phase 1 Security: Validate MIME type (CSV types only). Do NOT trust file extension.
+    if (!validCsvMimeTypes.includes(file.mimetype)) {
       callback(new AppError(400, "Only CSV files are supported. Invalid MIME type.", "INVALID_FILE_TYPE"));
       return;
     }
