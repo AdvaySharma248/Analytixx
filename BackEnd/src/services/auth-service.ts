@@ -7,7 +7,7 @@ import {
   verifyPassword,
 } from "../lib/auth.js";
 import { env } from "../config/env.js";
-import { sendVerificationEmail } from "./mail-service.js";
+import { ensureMailDeliveryReady, sendVerificationEmail } from "./mail-service.js";
 
 function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
@@ -43,6 +43,8 @@ export async function signUpUser(input: {
   email: string;
   password: string;
 }) {
+  await ensureMailDeliveryReady();
+
   const email = normalizeEmail(input.email);
   const name = input.name.trim();
   const passwordHash = await hashPassword(input.password);
@@ -111,7 +113,7 @@ export async function signUpUser(input: {
     deliveryMode: mailResult.deliveryMode,
     previewUrl: mailResult.previewUrl,
     verificationUrl:
-      env.NODE_ENV === "production" && mailResult.deliveryMode === "smtp"
+      (env.isProduction || env.isHostedEnvironment) && mailResult.deliveryMode === "smtp"
         ? null
         : mailResult.verificationUrl,
   };

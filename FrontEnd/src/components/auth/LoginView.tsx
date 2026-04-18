@@ -107,6 +107,8 @@ function FeedbackBanner({ feedback }: { feedback: AuthFeedback | null }) {
   }
 
   const isSuccess = feedback.type === 'success';
+  const isPreviewMode = isSuccess && Boolean(feedback.previewUrl);
+  const hasDevLink = isSuccess && !feedback.previewUrl && Boolean(feedback.verificationUrl);
 
   return (
     <div
@@ -117,6 +119,11 @@ function FeedbackBanner({ feedback }: { feedback: AuthFeedback | null }) {
       }`}
     >
       <p>{feedback.message}</p>
+      {isPreviewMode && (
+        <p className="mt-1 text-[12px] opacity-80">
+          This app is using a development mail preview, so nothing was delivered to your real inbox.
+        </p>
+      )}
       {feedback.previewUrl && (
         <a
           href={feedback.previewUrl}
@@ -127,7 +134,7 @@ function FeedbackBanner({ feedback }: { feedback: AuthFeedback | null }) {
           Open preview email
         </a>
       )}
-      {!feedback.previewUrl && feedback.verificationUrl && (
+      {hasDevLink && (
         <p className="mt-1 break-all text-[12px] opacity-80">
           Dev verify link: {feedback.verificationUrl}
         </p>
@@ -342,7 +349,11 @@ export default function AuthView() {
       const result = await signUpWithEmail({ name, email, password });
       setFeedback({
         type: 'success',
-        message: 'Verification email sent. Please check your inbox.',
+        message: result.previewUrl
+          ? 'Development preview email created.'
+          : result.verificationUrl
+            ? 'Development verification link generated.'
+            : 'Verification email sent. Please check your inbox.',
         previewUrl: result.previewUrl ?? null,
         verificationUrl: result.verificationUrl ?? null,
       });

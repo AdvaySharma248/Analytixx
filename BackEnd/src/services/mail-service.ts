@@ -11,10 +11,20 @@ type MailTransport = {
 let transportPromise: Promise<MailTransport> | null = null;
 
 async function createMailTransport(): Promise<MailTransport> {
-  if (env.isProduction && !env.SMTP_HOST) {
+  const requiresConfiguredDelivery = env.isProduction || env.isHostedEnvironment;
+
+  if (requiresConfiguredDelivery && !env.SMTP_HOST) {
     throw new AppError(
       503,
-      "Email delivery is not configured for production. Set SMTP_HOST and related credentials.",
+      "Email delivery is not configured on the server. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, and EMAIL_FROM before sending verification emails.",
+      "EMAIL_NOT_CONFIGURED",
+    );
+  }
+
+  if (requiresConfiguredDelivery && env.EMAIL_FROM.includes(".local>")) {
+    throw new AppError(
+      503,
+      "Email delivery is not configured on the server. EMAIL_FROM must use a real sender address instead of a .local placeholder.",
       "EMAIL_NOT_CONFIGURED",
     );
   }
@@ -74,6 +84,10 @@ async function createMailTransport(): Promise<MailTransport> {
 async function getMailTransport() {
   transportPromise ??= createMailTransport();
   return transportPromise;
+}
+
+export async function ensureMailDeliveryReady() {
+  await getMailTransport();
 }
 
 export async function sendVerificationEmail(options: {

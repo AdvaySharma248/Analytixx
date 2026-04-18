@@ -113,6 +113,7 @@ if (!isProduction) {
 export const env = {
   ...data,
   isProduction,
+  isHostedEnvironment,
   host: data.HOST ?? "0.0.0.0",
   trustProxy: data.TRUST_PROXY ?? (isProduction || isHostedEnvironment ? 1 : false),
   cookieDomain: data.COOKIE_DOMAIN ?? undefined,
