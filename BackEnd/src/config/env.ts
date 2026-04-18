@@ -93,6 +93,9 @@ if (!parsed.success) {
 
 const data = parsed.data;
 const isProduction = data.NODE_ENV === "production";
+const isHostedEnvironment = Boolean(
+  process.env.RENDER || process.env.RENDER_EXTERNAL_HOSTNAME || process.env.RAILWAY_ENVIRONMENT,
+);
 
 if ((data.SMTP_USER && !data.SMTP_PASS) || (!data.SMTP_USER && data.SMTP_PASS)) {
   throw new Error(
@@ -110,8 +113,8 @@ if (!isProduction) {
 export const env = {
   ...data,
   isProduction,
-  host: data.HOST ?? (isProduction ? "0.0.0.0" : "127.0.0.1"),
-  trustProxy: data.TRUST_PROXY ?? (isProduction ? 1 : false),
+  host: data.HOST ?? "0.0.0.0",
+  trustProxy: data.TRUST_PROXY ?? (isProduction || isHostedEnvironment ? 1 : false),
   cookieDomain: data.COOKIE_DOMAIN ?? undefined,
   allowedOrigins: Array.from(allowedOrigins),
   storageRoot: resolve(process.cwd(), data.DATA_STORAGE_DIR),
